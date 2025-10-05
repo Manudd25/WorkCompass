@@ -1,9 +1,9 @@
 <script setup>
-import axios from "axios";
 import { onMounted, ref } from "vue";
 import { RouterLink, useRouter } from "vue-router";
 import { useUserStore } from "../store/userStore.js";
 import ApplicationList from "../components/ApplicationList.vue";
+import { getApplications } from "../../services/api.js";
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -22,13 +22,10 @@ const fetchApplications = async () => {
       router.push("/login");
       return;
     }
-    const res = await axios.get(
-      `http://localhost:8000/api/applications?candidateId=${encodeURIComponent(userId)}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    applications.value = res.data || [];
+    const res = await getApplications(token, userId);
+    applications.value = res || [];
   } catch (error) {
-    errorMessage.value = error?.response?.data?.message || "Failed to load applications.";
+    errorMessage.value = error?.message || "Failed to load applications.";
   } finally {
     isLoading.value = false;
   }

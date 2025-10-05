@@ -1,5 +1,4 @@
 <script setup>
-import axios from "axios";
 import { onMounted, onBeforeUnmount, ref, computed } from "vue";
 import { RouterLink, useRouter } from "vue-router";
 import { useUserStore } from "../store/userStore.js";
@@ -8,6 +7,7 @@ import Header from "../components/Header.vue";
 import Footer from "../components/Footer.vue";
 import CandidateForm from "../components/CandidateForm.vue";
 import CandidateApplicationCard from "../components/CandidateApplicationCard.vue";
+import { getApplications, updateApplication as apiUpdateApplication, deleteApplication as apiDeleteApplication, createCandidate as apiCreateCandidate } from "../../services/api.js";
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -31,13 +31,11 @@ const fetchApplications = async () => {
       return;
     }
     const isRecruiter = userStore.user?.role === "recruiter";
-    const url = isRecruiter
-      ? "http://localhost:8000/api/applications"
-      : `http://localhost:8000/api/applications?candidateId=${encodeURIComponent(userId)}`;
-    const res = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
-    applications.value = res.data || [];
+    const candidateId = isRecruiter ? null : userId;
+    const res = await getApplications(token, candidateId);
+    applications.value = res || [];
   } catch (error) {
-    errorMessage.value = error?.response?.data?.message || "Failed to load applications.";
+    errorMessage.value = error?.message || "Failed to load applications.";
   } finally {
     isLoading.value = false;
   }
@@ -76,40 +74,33 @@ const handleLogout = () => {
 };
 
 const handleCreateCandidate = (formData) => {
-  createCandidate(formData);
+  createCandidateHandler(formData);
 };
 
 // Candidate application management
-const updateApplication = async (formData) => {
+const updateCandidateApplication = async (formData) => {
   try {
     const token = userStore.token;
-    await axios.put(
-      `http://localhost:8000/api/applications/${encodeURIComponent(formData.id)}`,
-      {
-        company: formData.company,
-        role: formData.role,
-        status: formData.status,
-        date: formData.date,
-        notes: formData.notes
-      },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    await apiUpdateApplication(formData.id, {
+      company: formData.company,
+      role: formData.role,
+      status: formData.status,
+      date: formData.date,
+      notes: formData.notes
+    }, token);
     fetchApplications(); // Refresh applications
   } catch (e) {
-    errorMessage.value = e?.response?.data?.message || "Failed to update application.";
+    errorMessage.value = e?.message || "Failed to update application.";
   }
 };
 
 const deleteCandidateApplication = async (applicationId) => {
   try {
     const token = userStore.token;
-    await axios.delete(
-      `http://localhost:8000/api/applications/${encodeURIComponent(applicationId)}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    await apiDeleteApplication(applicationId, token);
     fetchApplications(); // Refresh applications
   } catch (e) {
-    errorMessage.value = e?.response?.data?.message || "Failed to delete application.";
+    errorMessage.value = e?.message || "Failed to delete application.";
   }
 };
 
@@ -118,24 +109,17 @@ const deleteCandidateApplication = async (applicationId) => {
 const updateApplicationStatus = async ({ id, status }) => {
   try {
     const token = userStore.token;
-    await axios.put(
-      `http://localhost:8000/api/applications/${encodeURIComponent(id)}`,
-      { status },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    await apiUpdateApplication(id, { status }, token);
     window.dispatchEvent(new CustomEvent("applications-updated"));
   } catch (e) {
     // no-op UI error; could surface toast here
   }
 };
 
-const deleteApplication = async ({ id }) => {
+const deleteApplicationHandler = async ({ id }) => {
   try {
     const token = userStore.token;
-    await axios.delete(
-      `http://localhost:8000/api/applications/${encodeURIComponent(id)}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    await apiDeleteApplication(id, token);
     window.dispatchEvent(new CustomEvent("applications-updated"));
   } catch (e) {
     // no-op UI error; could surface toast here
@@ -152,18 +136,16 @@ const closeCreateModal = () => {
   errorMessage.value = "";
 };
 
-const createCandidate = async (formData) => {
+const createCandidateHandler = async (formData) => {
   errorMessage.value = "";
   try {
     isSubmitting.value = true;
     const token = userStore.token;
-    await axios.post("http://localhost:8000/api/auth/candidates", formData, { 
-      headers: { Authorization: `Bearer ${token}` } 
-    });
+    await apiCreateCandidate(formData, token);
     showCreateModal.value = false;
     fetchApplications(); // Refresh the applications list
   } catch (e) {
-    errorMessage.value = e?.response?.data?.message || "Failed to create candidate.";
+    errorMessage.value = e?.message || "Failed to create candidate.";
   } finally {
     isSubmitting.value = false;
   }
@@ -258,11 +240,11 @@ const createCandidate = async (formData) => {
         </div>
         <div v-if="errorMessage" class="px-6 py-4 text-red-600 text-sm">{{ errorMessage }}</div>
         <div class="p-4">
-          <RecruiterTable
-            :applications="applications"
-            @update-status="updateApplicationStatus"
-            @delete-application="deleteApplication"
-          />
+              <RecruiterTable
+                :applications="applications"
+                @update-status="updateApplicationStatus"
+                @delete-application="deleteApplicationHandler"
+              />
         </div>
       </section>
 
@@ -295,13 +277,13 @@ const createCandidate = async (formData) => {
             </RouterLink>
           </div>
           <div v-else class="space-y-3">
-            <CandidateApplicationCard 
-              v-for="app in applications" 
-              :key="app._id" 
-              :application="app"
-              @update="updateApplication"
-              @delete="deleteCandidateApplication"
-            />
+                <CandidateApplicationCard 
+                  v-for="app in applications" 
+                  :key="app._id" 
+                  :application="app"
+                  @update="updateCandidateApplication"
+                  @delete="deleteCandidateApplication"
+                />
           </div>
         </div>
       </section>

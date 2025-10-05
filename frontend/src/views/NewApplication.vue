@@ -1,9 +1,9 @@
 <script setup>
-import axios from "axios";
 import { ref } from "vue";
 import { RouterLink, useRouter } from "vue-router";
 import { useUserStore } from "../store/userStore.js";
 import ApplicationForm from "../components/ApplicationForm.vue";
+import { createApplication } from "../../services/api.js";
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -26,14 +26,13 @@ const submitForm = async () => {
       router.push("/login");
       return;
     }
-    await axios.post(
-      "http://localhost:8000/api/applications",
+    await createApplication(
       { company: company.value, role: role.value, status: status.value, date: date.value, notes: notes.value },
-      { headers: { Authorization: `Bearer ${token}` } }
+      token
     );
     router.push("/applications");
   } catch (error) {
-    errorMessage.value = error?.response?.data?.message || "Failed to create application.";
+    errorMessage.value = error?.message || "Failed to create application.";
   } finally {
     isSubmitting.value = false;
   }

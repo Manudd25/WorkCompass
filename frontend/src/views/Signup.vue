@@ -1,8 +1,8 @@
 <script setup>
-import axios from "axios";
 import { ref, onMounted } from "vue";
 import { RouterLink, useRouter } from "vue-router";
 import { useUserStore } from "../store/userStore.js";
+import { signup } from "../../services/api.js";
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -28,7 +28,7 @@ const handleSignup = async () => {
   }
   try {
     isSubmitting.value = true;
-    const res = await axios.post("http://localhost:8000/api/auth/signup", {
+    const res = await signup({
       name: name.value,
       email: email.value,
       password: password.value,
@@ -36,10 +36,10 @@ const handleSignup = async () => {
       recruiterCompany: role.value === "recruiter" ? recruiterCompany.value : null,
     });
     // Persist user + token in store
-    userStore.setUser(res.data.user, res.data.token);
+    userStore.setUser(res.user, res.token);
     router.push("/dashboard");
   } catch (error) {
-    errorMessage.value = error?.response?.data?.message || "Signup failed. Please try again.";
+    errorMessage.value = error?.message || "Signup failed. Please try again.";
   } finally {
     isSubmitting.value = false;
   }

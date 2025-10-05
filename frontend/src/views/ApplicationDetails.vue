@@ -1,9 +1,9 @@
 <script setup>
-import axios from "axios";
 import { onMounted, ref } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { useUserStore } from "../store/userStore.js";
 import ApplicationCard from "../components/ApplicationCard.vue";
+import { getApplications, updateApplication } from "../../services/api.js";
 
 const route = useRoute();
 const router = useRouter();
@@ -25,14 +25,12 @@ const fetchApplication = async () => {
       return;
     }
     const id = route.params.id;
-    const res = await axios.get(`http://localhost:8000/api/applications?candidateId=${encodeURIComponent(userStore.user?.id)}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    const list = res.data || [];
+    const res = await getApplications(token, userStore.user?.id);
+    const list = res || [];
     application.value = list.find((a) => a._id === id) || null;
     if (!application.value) errorMessage.value = "Application not found.";
   } catch (error) {
-    errorMessage.value = error?.response?.data?.message || "Failed to load application.";
+    errorMessage.value = error?.message || "Failed to load application.";
   } finally {
     isLoading.value = false;
   }
@@ -51,16 +49,12 @@ const saveStatus = async () => {
       return;
     }
     const id = application.value._id;
-    await axios.put(
-      `http://localhost:8000/api/applications/${encodeURIComponent(id)}`,
-      { status: application.value.status },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    await updateApplication(id, { status: application.value.status }, token);
     updateMessage.value = "Status updated.";
     // Notify other views (e.g., Dashboard) to refresh
     window.dispatchEvent(new CustomEvent("applications-updated"));
   } catch (error) {
-    updateMessage.value = error?.response?.data?.message || "Failed to update status.";
+    updateMessage.value = error?.message || "Failed to update status.";
   } finally {
     isUpdating.value = false;
   }

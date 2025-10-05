@@ -1,8 +1,8 @@
 <script setup>
-import axios from "axios";
 import { ref, onMounted } from "vue";
 import { RouterLink, useRouter } from "vue-router";
 import { useUserStore } from "../store/userStore.js";
+import { login, googleAuth } from "../../services/api.js";
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -21,14 +21,14 @@ const handleLogin = async () => {
   }
   try {
     isSubmitting.value = true;
-    const res = await axios.post("http://localhost:8000/api/auth/login", {
+    const res = await login({
       email: email.value,
       password: password.value,
     });
-    userStore.setUser(res.data.user, res.data.token);
+    userStore.setUser(res.user, res.token);
     router.push("/dashboard");
   } catch (error) {
-    errorMessage.value = error?.response?.data?.message || "Login failed. Please try again.";
+    errorMessage.value = error?.message || "Login failed. Please try again.";
   } finally {
     isSubmitting.value = false;
   }
@@ -70,11 +70,11 @@ const handleGoogleCredentialResponse = async (response) => {
   try {
     const idToken = response?.credential;
     if (!idToken) return;
-    const res = await axios.post("http://localhost:8000/api/auth/google", { idToken });
-    userStore.setUser(res.data.user, res.data.token);
+    const res = await googleAuth(idToken);
+    userStore.setUser(res.user, res.token);
     router.push("/dashboard");
   } catch (err) {
-    errorMessage.value = err?.response?.data?.message || "Google sign-in failed.";
+    errorMessage.value = err?.message || "Google sign-in failed.";
   }
 };
 

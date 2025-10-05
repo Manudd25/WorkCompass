@@ -1,8 +1,8 @@
 <script setup>
-import axios from "axios";
 import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useUserStore } from "../store/userStore.js";
+import { getCandidates, getApplications, createApplication, updateApplication, deleteApplication } from "../../services/api.js";
 
 const route = useRoute();
 const router = useRouter();
@@ -46,8 +46,8 @@ const fetchData = async () => {
     }
     const id = route.params.id;
     // Load candidate
-    const candidatesResp = await axios.get("http://localhost:8000/api/auth/candidates", { headers: { Authorization: `Bearer ${token}` } });
-    candidate.value = (candidatesResp.data || []).find((u) => u._id === id) || null;
+    const candidatesResp = await getCandidates(token);
+    candidate.value = (candidatesResp || []).find((u) => u._id === id) || null;
     if (!candidate.value) {
       errorMessage.value = "Candidate not found.";
     } else {
@@ -64,25 +64,24 @@ const fetchData = async () => {
       editLocation.value = candidate.value.location || "";
     }
     // Load applications for candidate
-    const appsResp = await axios.get(`http://localhost:8000/api/applications?candidateId=${encodeURIComponent(id)}`, { headers: { Authorization: `Bearer ${token}` } });
-    applications.value = appsResp.data || [];
+    const appsResp = await getApplications(token, id);
+    applications.value = appsResp || [];
   } catch (e) {
-    errorMessage.value = e?.response?.data?.message || "Failed to load candidate.";
+    errorMessage.value = e?.message || "Failed to load candidate.";
   } finally {
     isLoading.value = false;
   }
 };
 
-const createApplication = async () => {
+const createApplicationHandler = async () => {
   errorMessage.value = "";
   try {
     isSubmitting.value = true;
     const token = userStore.token;
     const id = route.params.id;
-    await axios.post(
-      "http://localhost:8000/api/applications",
+    await createApplication(
       { company: company.value, role: role.value, status: status.value, date: date.value, notes: notes.value, candidateId: id },
-      { headers: { Authorization: `Bearer ${token}` } }
+      token
     );
     company.value = "";
     role.value = "";
@@ -90,7 +89,7 @@ const createApplication = async () => {
     notes.value = "";
     fetchData();
   } catch (e) {
-    errorMessage.value = e?.response?.data?.message || "Failed to create application.";
+    errorMessage.value = e?.message || "Failed to create application.";
   } finally {
     isSubmitting.value = false;
   }
@@ -99,15 +98,15 @@ const createApplication = async () => {
 const updateApplicationStatus = async (appId, newStatus) => {
   try {
     const token = userStore.token;
-    await axios.put(`http://localhost:8000/api/applications/${encodeURIComponent(appId)}`, { status: newStatus }, { headers: { Authorization: `Bearer ${token}` } });
+    await updateApplication(appId, { status: newStatus }, token);
     fetchData();
   } catch (e) {}
 };
 
-const deleteApplication = async (appId) => {
+const deleteApplicationHandler = async (appId) => {
   try {
     const token = userStore.token;
-    await axios.delete(`http://localhost:8000/api/applications/${encodeURIComponent(appId)}`, { headers: { Authorization: `Bearer ${token}` } });
+    await deleteApplication(appId, token);
     fetchData();
   } catch (e) {}
 };
@@ -332,7 +331,7 @@ onMounted(fetchData);
 
       <section class="bg-white rounded-xl shadow p-6 mb-8">
         <h3 class="text-xl font-semibold mb-4">Add application for this candidate</h3>
-        <form @submit.prevent="createApplication" class="grid grid-cols-1 sm:grid-cols-5 gap-4">
+        <form @submit.prevent="createApplicationHandler" class="grid grid-cols-1 sm:grid-cols-5 gap-4">
           <input v-model="company" placeholder="Company" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required />
           <input v-model="role" placeholder="Role" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required />
           <select v-model="status" class="px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -379,7 +378,7 @@ onMounted(fetchData);
                       <option>Offer</option>
                       <option>Rejected</option>
                     </select>
-                    <button @click="deleteApplication(app._id)" class="px-2 py-1 text-xs rounded-md bg-red-50 text-red-700 hover:bg-red-100">Delete</button>
+                    <button @click="deleteApplicationHandler(app._id)" class="px-2 py-1 text-xs rounded-md bg-red-50 text-red-700 hover:bg-red-100">Delete</button>
                   </div>
                 </td>
               </tr>

@@ -1,8 +1,8 @@
 <script setup>
-import axios from "axios";
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useUserStore } from "../store/userStore.js";
+import { getCandidates, createCandidate as apiCreateCandidate, deleteCandidate as apiDeleteCandidate } from "../../services/api.js";
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -34,21 +34,21 @@ const fetchCandidates = async () => {
       router.push("/login");
       return;
     }
-    const res = await axios.get("http://localhost:8000/api/auth/candidates", { headers: { Authorization: `Bearer ${token}` } });
-    candidates.value = res.data || [];
+    const res = await getCandidates(token);
+    candidates.value = res || [];
   } catch (e) {
-    errorMessage.value = e?.response?.data?.message || "Failed to load candidates.";
+    errorMessage.value = e?.message || "Failed to load candidates.";
   } finally {
     isLoading.value = false;
   }
 };
 
-const createCandidate = async () => {
+const createCandidateHandler = async () => {
   errorMessage.value = "";
   try {
     isSubmitting.value = true;
     const token = userStore.token;
-    await axios.post("http://localhost:8000/api/auth/candidates", { 
+    await apiCreateCandidate({ 
       name: name.value, 
       email: email.value,
       wishedSalary: wishedSalary.value,
@@ -59,7 +59,7 @@ const createCandidate = async () => {
       experience: experience.value,
       skills: skills.value,
       location: location.value
-    }, { headers: { Authorization: `Bearer ${token}` } });
+    }, token);
     name.value = "";
     email.value = "";
     wishedSalary.value = "";
@@ -73,13 +73,13 @@ const createCandidate = async () => {
     showCreateModal.value = false;
     fetchCandidates();
   } catch (e) {
-    errorMessage.value = e?.response?.data?.message || "Failed to create candidate.";
+    errorMessage.value = e?.message || "Failed to create candidate.";
   } finally {
     isSubmitting.value = false;
   }
 };
 
-const deleteCandidate = async (candidateId) => {
+const deleteCandidateHandler = async (candidateId) => {
   if (!confirm("Are you sure you want to delete this candidate? This will also delete all their applications.")) {
     return;
   }
@@ -88,12 +88,10 @@ const deleteCandidate = async (candidateId) => {
   try {
     deletingId.value = candidateId;
     const token = userStore.token;
-    await axios.delete(`http://localhost:8000/api/auth/candidates/${encodeURIComponent(candidateId)}`, { 
-      headers: { Authorization: `Bearer ${token}` } 
-    });
+    await apiDeleteCandidate(candidateId, token);
     fetchCandidates();
   } catch (e) {
-    errorMessage.value = e?.response?.data?.message || "Failed to delete candidate.";
+    errorMessage.value = e?.message || "Failed to delete candidate.";
   } finally {
     deletingId.value = null;
   }
@@ -186,7 +184,7 @@ onMounted(fetchCandidates);
                 <td class="px-4 py-3">
                   <div class="flex gap-2">
                     <button @click="router.push(`/candidates/${c._id}`)" class="px-3 py-1 rounded-md bg-blue-100 text-blue-700 hover:bg-blue-200">Manage</button>
-                    <button @click="deleteCandidate(c._id)" :disabled="deletingId === c._id" class="px-3 py-1 rounded-md bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-50">
+                    <button @click="deleteCandidateHandler(c._id)" :disabled="deletingId === c._id" class="px-3 py-1 rounded-md bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-50">
                       {{ deletingId === c._id ? 'Deleting...' : 'Delete' }}
                     </button>
                   </div>
@@ -218,7 +216,7 @@ onMounted(fetchCandidates);
             </button>
           </div>
           
-          <form @submit.prevent="createCandidate" class="space-y-4">
+          <form @submit.prevent="createCandidateHandler" class="space-y-4">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <input v-model="name" placeholder="Full name" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required />
               <input v-model="email" type="email" placeholder="Email" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required />

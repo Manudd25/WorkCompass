@@ -1,10 +1,10 @@
 <script setup>
 import { ref, onMounted } from "vue";
-import axios from "axios";
 import { useRouter } from "vue-router";
 import { useUserStore } from "../store/userStore.js";
 import Header from "../components/Header.vue";
 import Footer from "../components/Footer.vue";
+import { getProfile, updateProfile, changePassword, deleteAccount } from "../../services/api.js";
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -35,18 +35,15 @@ const fetchUserData = async () => {
       return;
     }
 
-    const res = await axios.get("http://localhost:8000/api/auth/profile", {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const user = await getProfile(token);
     
-    const user = res.data;
     name.value = user.name || "";
     email.value = user.email || "";
     recruiterCompany.value = user.recruiterCompany || "";
     location.value = user.location || "";
     strivingFor.value = user.strivingFor || "";
   } catch (error) {
-    errorMessage.value = error?.response?.data?.message || "Failed to load profile data.";
+    errorMessage.value = error?.message || "Failed to load profile data.";
   }
 };
 
@@ -83,9 +80,7 @@ const saveProfile = async () => {
       updateData.recruiterCompany = recruiterCompany.value;
     }
 
-    await axios.put("http://localhost:8000/api/auth/profile", updateData, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    await updateProfile(updateData, token);
 
     // Update user store with new data
     userStore.setUser({
@@ -97,13 +92,13 @@ const saveProfile = async () => {
     successMessage.value = "Profile updated successfully!";
     isEditing.value = false;
   } catch (error) {
-    errorMessage.value = error?.response?.data?.message || "Failed to update profile.";
+    errorMessage.value = error?.message || "Failed to update profile.";
   } finally {
     isSubmitting.value = false;
   }
 };
 
-const changePassword = async () => {
+const changePasswordHandler = async () => {
   errorMessage.value = "";
   successMessage.value = "";
   
@@ -121,25 +116,23 @@ const changePassword = async () => {
     isSubmitting.value = true;
     const token = userStore.token;
     
-    await axios.put("http://localhost:8000/api/auth/password", {
+    await changePassword({
       currentPassword: currentPassword.value,
       newPassword: newPassword.value
-    }, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    }, token);
 
     successMessage.value = "Password changed successfully!";
     currentPassword.value = "";
     newPassword.value = "";
     confirmPassword.value = "";
   } catch (error) {
-    errorMessage.value = error?.response?.data?.message || "Failed to change password.";
+    errorMessage.value = error?.message || "Failed to change password.";
   } finally {
     isSubmitting.value = false;
   }
 };
 
-const deleteAccount = async () => {
+const deleteAccountHandler = async () => {
   if (!confirm("Are you sure you want to delete your account? This action cannot be undone and will delete all your data.")) {
     return;
   }
@@ -154,15 +147,13 @@ const deleteAccount = async () => {
     isDeleting.value = true;
     const token = userStore.token;
     
-    await axios.delete("http://localhost:8000/api/auth/profile", {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    await deleteAccount(token);
 
     // Logout and redirect
     userStore.logout();
     router.push("/");
   } catch (error) {
-    errorMessage.value = error?.response?.data?.message || "Failed to delete account.";
+    errorMessage.value = error?.message || "Failed to delete account.";
     isDeleting.value = false;
   }
 };
@@ -277,7 +268,7 @@ onMounted(fetchUserData);
       <!-- Password Change -->
       <section class="bg-white rounded-xl shadow p-6 mb-8">
         <h3 class="text-xl font-semibold mb-6">Change Password</h3>
-        <form @submit.prevent="changePassword" class="space-y-4">
+        <form @submit.prevent="changePasswordHandler" class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
             <input v-model="currentPassword" type="password" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required />
@@ -300,7 +291,7 @@ onMounted(fetchUserData);
       <section class="bg-red-50 border border-red-200 rounded-xl p-6">
         <h3 class="text-xl font-semibold text-red-800 mb-4">Danger Zone</h3>
         <p class="text-red-700 mb-4">Once you delete your account, there is no going back. Please be certain.</p>
-        <button @click="deleteAccount" :disabled="isDeleting" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition disabled:opacity-60">
+        <button @click="deleteAccountHandler" :disabled="isDeleting" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition disabled:opacity-60">
           {{ isDeleting ? 'Deleting...' : 'Delete Account' }}
         </button>
       </section>
