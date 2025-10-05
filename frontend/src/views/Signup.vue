@@ -2,7 +2,7 @@
 import { ref, onMounted } from "vue";
 import { RouterLink, useRouter } from "vue-router";
 import { useUserStore } from "../store/userStore.js";
-import { signup } from "../../services/api.js";
+import { signup, googleAuth } from "../../services/api.js";
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -65,6 +65,9 @@ const setupGoogleButton = () => {
   window.google.accounts.id.initialize({
     client_id: clientId,
     callback: handleGoogleCredentialResponse,
+    auto_select: false,
+    cancel_on_tap_outside: false,
+    use_fedcm_for_prompt: false,
   });
   window.google.accounts.id.renderButton(googleButtonEl.value, {
     theme: "outline",
@@ -72,6 +75,7 @@ const setupGoogleButton = () => {
     width: 320,
     text: "signup_with",
     shape: "pill",
+    type: "standard",
   });
 };
 
@@ -79,11 +83,11 @@ const handleGoogleCredentialResponse = async (response) => {
   try {
     const idToken = response?.credential;
     if (!idToken) return;
-    const res = await axios.post("http://localhost:8000/api/auth/google", { idToken });
-    userStore.setUser(res.data.user, res.data.token);
+    const res = await googleAuth(idToken);
+    userStore.setUser(res.user, res.token);
     router.push("/dashboard");
   } catch (err) {
-    errorMessage.value = err?.response?.data?.message || "Google sign-up failed.";
+    errorMessage.value = err?.message || "Google sign-up failed.";
   }
 };
 

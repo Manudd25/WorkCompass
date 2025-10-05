@@ -56,6 +56,9 @@ const setupGoogleButton = () => {
   window.google.accounts.id.initialize({
     client_id: clientId,
     callback: handleGoogleCredentialResponse,
+    auto_select: false,
+    cancel_on_tap_outside: false,
+    use_fedcm_for_prompt: false,
   });
   window.google.accounts.id.renderButton(googleButtonEl.value, {
     theme: "outline",
@@ -63,6 +66,7 @@ const setupGoogleButton = () => {
     width: 320,
     text: "signin_with",
     shape: "pill",
+    type: "standard",
   });
 };
 
