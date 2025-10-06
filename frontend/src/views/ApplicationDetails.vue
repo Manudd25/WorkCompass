@@ -86,7 +86,7 @@ const saveStatus = async () => {
           <p class="text-xl font-semibold">{{ application.role }} <span class="text-gray-500">@ {{ application.company }}</span></p>
           <div class="text-sm text-gray-600">Status: {{ application.status }}</div>
           <div class="text-sm text-gray-600">Date: {{ new Date(application.date).toLocaleDateString() }}</div>
-          <div class="text-sm text-gray-600">Notes: {{ application.notes || "—" }}</div>
+          <div class="text-sm text-gray-600 break-words break-all">Notes: {{ application.notes || "—" }}</div>
         </div>
 
         <!-- Status editor -->

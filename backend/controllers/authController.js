@@ -130,6 +130,8 @@ export const googleAuth = async (req, res) => {
 
     let user = await User.findOne({ email });
     if (!user) {
+      // For Google OAuth, default to candidate role
+      // Recruiters should use regular signup form to specify company
       user = new User({
         name,
         email,
@@ -196,7 +198,7 @@ export const createCandidate = async (req, res) => {
       name, 
       email, 
       role: "candidate", 
-      oauthProvider: null,
+      oauthProvider: "recruiter-created", // Mark as recruiter-created to bypass password requirement
       wishedSalary,
       earlyStartDate: earlyStartDate ? new Date(earlyStartDate) : null,
       candidateNotes,
@@ -204,7 +206,8 @@ export const createCandidate = async (req, res) => {
       company: recruiter.recruiterCompany, // Automatically assign recruiter's company
       experience,
       skills,
-      location
+      location,
+      recruiterCompany: recruiter.recruiterCompany // Assign to recruiter's company for data isolation
     });
     // No password for recruiter-created candidate; candidate can complete account later via email flow
     await user.save();
@@ -224,7 +227,11 @@ export const createCandidate = async (req, res) => {
     });
   } catch (error) {
     console.error("Create candidate error:", error.message);
-    res.status(500).json({ message: "Server error creating candidate." });
+    console.error("Full error:", error);
+    res.status(500).json({ 
+      message: "Server error creating candidate.",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 

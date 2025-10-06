@@ -21,10 +21,30 @@ const ApplicationSchema = new mongoose.Schema({
   notes: {
     type: String,
   },
+  // Interview scheduling fields
+  interviewTime: {
+    type: String,
+  },
+  interviewDate: {
+    type: Date,
+  },
+  interviewLocation: {
+    type: String,
+  },
+  interviewType: {
+    type: String,
+    enum: ["video", "phone", "in-person"],
+  },
+  interviewNotes: {
+    type: String,
+  },
   candidateId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
+  },
+  recruiterCompany: {
+    type: String,
   },
 });
 

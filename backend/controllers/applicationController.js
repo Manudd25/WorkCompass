@@ -1,4 +1,5 @@
 import Application from "../models/Application.js";
+import User from "../models/User.js";
 
 // CREATE
 export const createApplication = async (req, res) => {
@@ -46,8 +47,20 @@ export const getApplications = async (req, res) => {
       // Candidates can only view their own applications
       filter = { candidateId: req.user._id };
     } else if (req.user.role === "recruiter") {
-      // Recruiters can filter by candidateId or view all
-      filter = candidateId ? { candidateId } : {};
+      // Recruiters can only view applications from candidates they created
+      if (candidateId) {
+        // Check if the candidate belongs to this recruiter's company
+        const candidate = await User.findById(candidateId).select("recruiterCompany");
+        if (!candidate || candidate.recruiterCompany !== req.user.recruiterCompany) {
+          return res.status(403).json({ message: "Access denied. Candidate not found or not in your company." });
+        }
+        filter = { candidateId };
+      } else {
+        // Get all candidates from this recruiter's company
+        const candidates = await User.find({ recruiterCompany: req.user.recruiterCompany }).select("_id");
+        const candidateIds = candidates.map(c => c._id);
+        filter = { candidateId: { $in: candidateIds } };
+      }
     }
 
     const applications = await Application.find(filter).populate("candidateId", "name email role");

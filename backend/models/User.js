@@ -28,7 +28,7 @@ const UserSchema = new mongoose.Schema(
     },
     oauthProvider: {
       type: String,
-      enum: ["google", "github", "linkedin", "facebook", null],
+      enum: ["google", "github", "linkedin", "facebook", "recruiter-created", null],
       default: null,
     },
     oauthId: {

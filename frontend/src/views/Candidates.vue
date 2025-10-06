@@ -1,8 +1,13 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useUserStore } from "../store/userStore.js";
 import { getCandidates, createCandidate as apiCreateCandidate, deleteCandidate as apiDeleteCandidate } from "../../services/api.js";
+import { exportToPDF, exportToCSV, formatFilename } from "../utils/exportUtils.js";
+
+// Pagination
+const currentPage = ref(1);
+const itemsPerPage = 10;
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -24,6 +29,50 @@ const location = ref("");
 const isSubmitting = ref(false);
 const deletingId = ref(null);
 const showCreateModal = ref(false);
+
+// Pagination computed properties
+const paginatedCandidates = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  return candidates.value.slice(start, end);
+});
+
+const totalPages = computed(() => {
+  return Math.ceil(candidates.value.length / itemsPerPage);
+});
+
+const hasNextPage = computed(() => currentPage.value < totalPages.value);
+const hasPrevPage = computed(() => currentPage.value > 1);
+
+// Pagination methods
+const nextPage = () => {
+  if (hasNextPage.value) {
+    currentPage.value++;
+  }
+};
+
+const prevPage = () => {
+  if (hasPrevPage.value) {
+    currentPage.value--;
+  }
+};
+
+const goToPage = (page) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page;
+  }
+};
+
+// Export functions
+const exportCandidatesPDF = () => {
+  const filename = formatFilename('candidates', 'pdf');
+  exportToPDF.candidates(candidates.value, filename);
+};
+
+const exportCandidatesCSV = () => {
+  const filename = formatFilename('candidates', 'csv');
+  exportToCSV.candidates(candidates.value, filename);
+};
 
 const fetchCandidates = async () => {
   errorMessage.value = "";
@@ -126,26 +175,26 @@ onMounted(fetchCandidates);
       <h1 @click="router.push('/')" class="text-2xl font-bold text-blue-600 cursor-pointer">WorkCompass</h1>
       <nav class="space-x-3 flex items-center">
         <span class="hidden sm:inline text-gray-600 font-medium">Hi, {{ userStore.user?.name || "User" }}</span>
-        <button @click="router.push('/dashboard')" class="text-gray-600 hover:text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg font-medium transition-all duration-200 border border-transparent hover:border-blue-200">
+        <button @click="router.push('/dashboard')" class="px-4 py-2 rounded-lg font-medium transition-all duration-200 text-gray-700 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 border border-transparent">
           <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z"></path>
           </svg>
           Dashboard
         </button>
-        <button @click="router.push('/candidates')" class="text-blue-600 bg-blue-50 px-4 py-2 rounded-lg font-medium border border-blue-200">
+        <button @click="router.push('/candidates')" class="px-4 py-2 rounded-lg font-medium transition-all duration-200 text-gray-700 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 border border-transparent">
           <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
           </svg>
           Candidates
         </button>
-        <button @click="openCreateModal" class="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 rounded-lg font-medium shadow-md hover:shadow-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 transform hover:scale-105">
+        <button @click="openCreateModal" class="px-4 py-2 rounded-lg font-medium transition-all duration-200 text-gray-700 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 border border-transparent">
           <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
           </svg>
           Add New Candidate
         </button>
-        <button @click="userStore.logout(); router.push('/login')" class="text-gray-600 hover:text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg font-medium transition-all duration-200 border border-transparent hover:border-red-200">
+        <button @click="userStore.logout(); router.push('/login')" class="px-4 py-2 rounded-lg font-medium transition-all duration-200 text-gray-700 hover:bg-red-50 hover:text-red-600 hover:border-red-200 border border-transparent">
           <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
           </svg>
@@ -154,17 +203,75 @@ onMounted(fetchCandidates);
       </nav>
     </header>
 
-    <main class="flex-1 px-6 py-8 max-w-6xl w-full mx-auto">
-      <h2 class="text-3xl font-extrabold mb-6">Candidates</h2>
+    <main class="flex-1 px-4 sm:px-6 py-6 sm:py-8 max-w-6xl w-full mx-auto">
+      <h2 class="text-2xl sm:text-3xl font-extrabold mb-4 sm:mb-6">Candidates</h2>
 
       <div v-if="errorMessage" class="mb-4 text-red-600">{{ errorMessage }}</div>
 
       <section class="bg-white rounded-xl shadow overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h3 class="text-xl font-semibold">All candidates</h3>
-          <span v-if="isLoading" class="text-sm text-gray-500">Loading…</span>
+        <div class="px-4 sm:px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+          <h3 class="text-lg sm:text-xl font-semibold">All candidates</h3>
+          <div class="flex items-center gap-4">
+            <span v-if="isLoading" class="text-sm text-gray-500">Loading…</span>
+            <div class="flex gap-2">
+              <button
+                @click="exportCandidatesPDF"
+                :disabled="candidates.length === 0"
+                class="px-3 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 hover:border-red-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                PDF
+              </button>
+              <button
+                @click="exportCandidatesCSV"
+                :disabled="candidates.length === 0"
+                class="px-3 py-2 text-sm font-medium text-green-600 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 hover:border-green-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                CSV
+              </button>
+            </div>
+          </div>
         </div>
-        <div class="overflow-x-auto">
+        
+        <!-- Mobile Card Layout -->
+        <div class="block sm:hidden">
+          <div v-if="candidates.length === 0" class="px-4 py-6 text-center text-gray-500">No candidates yet.</div>
+          <div v-else class="divide-y divide-gray-200">
+            <div v-for="c in paginatedCandidates" :key="c._id" class="p-4">
+              <div class="flex justify-between items-start mb-2">
+                <div class="flex-1 min-w-0">
+                  <h4 class="font-semibold text-gray-900 truncate">{{ c.name }}</h4>
+                  <p class="text-sm text-gray-500 truncate">{{ c.email }}</p>
+                  <p class="text-sm text-gray-600">{{ c.jobTitle || 'No job title' }}</p>
+                  <p class="text-xs text-gray-400">{{ new Date(c.createdAt).toLocaleDateString() }}</p>
+                </div>
+              </div>
+              <div class="flex gap-2 mt-3">
+                <button @click="router.push(`/candidates/${c._id}`)" class="flex-1 px-3 py-2 rounded-lg font-medium transition-all duration-200 border border-transparent text-blue-600 hover:text-blue-700 hover:bg-blue-50 hover:border-blue-200 text-sm">
+                  <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  </svg>
+                  Manage
+                </button>
+                <button @click="deleteCandidateHandler(c._id)" :disabled="deletingId === c._id" class="flex-1 px-3 py-2 rounded-lg font-medium transition-all duration-200 border border-transparent text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-200 disabled:opacity-50 text-sm">
+                  <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                  </svg>
+                  {{ deletingId === c._id ? 'Deleting...' : 'Delete' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Desktop Table Layout -->
+        <div class="hidden sm:block overflow-x-auto">
           <table class="min-w-full text-left">
             <thead>
               <tr class="bg-gray-50 text-gray-600 text-sm">
@@ -176,15 +283,24 @@ onMounted(fetchCandidates);
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-100 text-sm">
-              <tr v-for="c in candidates" :key="c._id" class="hover:bg-gray-50">
+              <tr v-for="c in paginatedCandidates" :key="c._id" class="hover:bg-gray-50">
                 <td class="px-4 py-3">{{ c.name }}</td>
                 <td class="px-4 py-3">{{ c.email }}</td>
                 <td class="px-4 py-3">{{ c.jobTitle || '—' }}</td>
                 <td class="px-4 py-3">{{ new Date(c.createdAt).toLocaleDateString() }}</td>
                 <td class="px-4 py-3">
                   <div class="flex gap-2">
-                    <button @click="router.push(`/candidates/${c._id}`)" class="px-3 py-1 rounded-md bg-blue-100 text-blue-700 hover:bg-blue-200">Manage</button>
-                    <button @click="deleteCandidateHandler(c._id)" :disabled="deletingId === c._id" class="px-3 py-1 rounded-md bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-50">
+                    <button @click="router.push(`/candidates/${c._id}`)" class="px-4 py-2 rounded-lg font-medium transition-all duration-200 border border-transparent text-blue-600 hover:text-blue-700 hover:bg-blue-50 hover:border-blue-200">
+                      <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                      </svg>
+                      Manage
+                    </button>
+                    <button @click="deleteCandidateHandler(c._id)" :disabled="deletingId === c._id" class="px-4 py-2 rounded-lg font-medium transition-all duration-200 border border-transparent text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-200 disabled:opacity-50">
+                      <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      </svg>
                       {{ deletingId === c._id ? 'Deleting...' : 'Delete' }}
                     </button>
                   </div>
@@ -195,6 +311,68 @@ onMounted(fetchCandidates);
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div v-if="totalPages > 1" class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 px-4 sm:px-6">
+          <div class="text-sm text-gray-600">
+            Page {{ currentPage }} of {{ totalPages }}
+          </div>
+          <div class="flex items-center gap-2">
+            <!-- Previous Button -->
+            <button 
+              @click="prevPage" 
+              :disabled="!hasPrevPage"
+              class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            >
+              <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+              </svg>
+              Previous
+            </button>
+
+            <!-- Page Numbers -->
+            <div class="flex gap-1">
+              <button 
+                v-for="page in Math.min(5, totalPages)" 
+                :key="page"
+                @click="goToPage(page)"
+                :class="[
+                  'px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200',
+                  currentPage === page 
+                    ? 'bg-blue-600 text-white' 
+                    : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 hover:text-gray-700'
+                ]"
+              >
+                {{ page }}
+              </button>
+              <span v-if="totalPages > 5" class="px-3 py-2 text-sm text-gray-500">...</span>
+              <button 
+                v-if="totalPages > 5"
+                @click="goToPage(totalPages)"
+                :class="[
+                  'px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200',
+                  currentPage === totalPages 
+                    ? 'bg-blue-600 text-white' 
+                    : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 hover:text-gray-700'
+                ]"
+              >
+                {{ totalPages }}
+              </button>
+            </div>
+
+            <!-- Next Button -->
+            <button 
+              @click="nextPage" 
+              :disabled="!hasNextPage"
+              class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            >
+              Next
+              <svg class="w-4 h-4 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </button>
+          </div>
         </div>
       </section>
     </main>
@@ -238,8 +416,16 @@ onMounted(fetchCandidates);
               <textarea v-model="candidateNotes" placeholder="Notes about the candidate" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
             </div>
             <div class="flex justify-end gap-3 pt-4">
-              <button type="button" @click="closeCreateModal" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">Cancel</button>
-              <button type="submit" :disabled="isSubmitting" class="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold shadow hover:bg-blue-700 transition disabled:opacity-60">
+              <button type="button" @click="closeCreateModal" class="px-4 py-2 rounded-lg font-medium transition-all duration-200 border border-transparent text-gray-600 hover:text-gray-700 hover:bg-gray-50 hover:border-gray-200">
+                <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+                Cancel
+              </button>
+              <button type="submit" :disabled="isSubmitting" class="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 rounded-lg font-medium shadow-md hover:shadow-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 transform hover:scale-105 disabled:opacity-60 disabled:transform-none">
+                <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
                 {{ isSubmitting ? "Creating…" : "Create Candidate" }}
               </button>
             </div>

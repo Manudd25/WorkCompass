@@ -31,7 +31,7 @@ const props = defineProps({
       </span>
     </div>
 
-    <div class="mt-4 text-gray-700 whitespace-pre-line" v-if="props.application?.notes">
+    <div class="mt-4 text-gray-700 whitespace-pre-line break-words break-all" v-if="props.application?.notes">
       {{ props.application.notes }}
     </div>
   </div>

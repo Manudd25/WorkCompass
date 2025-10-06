@@ -30,62 +30,62 @@ const handleLogout = () => {
     <div class="absolute inset-0 bg-black bg-opacity-40 z-10"></div>
 
     <!-- Header -->
-    <header class="relative z-20 flex justify-between items-center px-8 py-4 bg-white bg-opacity-90 backdrop-blur-sm shadow-md">
-      <h1 class="text-2xl font-bold text-blue-600">WorkCompass</h1>
-      <nav class="space-x-6">
+    <header class="relative z-20 flex justify-between items-center px-4 sm:px-8 py-4 bg-white bg-opacity-90 backdrop-blur-sm shadow-md">
+      <h1 class="text-xl sm:text-2xl font-bold text-blue-600">WorkCompass</h1>
+      <nav class="space-x-2 sm:space-x-6">
         <!-- Show different nav based on login status -->
         <template v-if="userStore.user">
           <!-- Logged in user navigation -->
-          <span class="hidden sm:inline text-gray-600 font-medium">Hi, {{ userStore.user.name }}</span>
-          <RouterLink to="/dashboard" class="text-gray-600 hover:text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg font-medium transition-all duration-200 border border-transparent hover:border-blue-200">
-            <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <span class="hidden md:inline text-gray-600 font-medium text-sm sm:text-base">Hi, {{ userStore.user.name }}</span>
+          <RouterLink to="/dashboard" class="text-gray-600 hover:text-blue-600 hover:bg-blue-50 px-2 sm:px-4 py-2 rounded-lg font-medium transition-all duration-200 border border-transparent hover:border-blue-200 text-sm sm:text-base">
+            <svg class="w-4 h-4 inline mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z"></path>
             </svg>
-            Dashboard
+            <span class="hidden sm:inline">Dashboard</span>
           </RouterLink>
-          <button @click="handleLogout" class="text-gray-600 hover:text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg font-medium transition-all duration-200 border border-transparent hover:border-red-200">
-            <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button @click="handleLogout" class="text-gray-600 hover:text-red-600 hover:bg-red-50 px-2 sm:px-4 py-2 rounded-lg font-medium transition-all duration-200 border border-transparent hover:border-red-200 text-sm sm:text-base">
+            <svg class="w-4 h-4 inline mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
             </svg>
-            Logout
+            <span class="hidden sm:inline">Logout</span>
           </button>
         </template>
         <template v-else>
           <!-- Guest user navigation -->
-          <RouterLink to="/login" class="text-gray-600 hover:text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg font-medium transition-all duration-200 border border-transparent hover:border-blue-200">
-            <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <RouterLink to="/login" class="text-gray-600 hover:text-blue-600 hover:bg-blue-50 px-2 sm:px-4 py-2 rounded-lg font-medium transition-all duration-200 border border-transparent hover:border-blue-200 text-sm sm:text-base">
+            <svg class="w-4 h-4 inline mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
             </svg>
-            Login
+            <span class="hidden sm:inline">Login</span>
           </RouterLink>
           <RouterLink
             to="/signup"
-            class="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 rounded-lg font-medium shadow-md hover:shadow-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 transform hover:scale-105"
+            class="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-2 sm:px-4 py-2 rounded-lg font-medium shadow-md hover:shadow-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 transform hover:scale-105 text-sm sm:text-base"
           >
-            <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 inline mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
             </svg>
-            Sign Up
+            <span class="hidden sm:inline">Sign Up</span>
           </RouterLink>
         </template>
       </nav>
     </header>
 
     <!-- Hero -->
-    <main class="relative z-20 flex-1 flex flex-col items-center justify-center text-center px-6 py-16">
-      <h2 class="text-4xl md:text-5xl font-extrabold mb-6 text-white drop-shadow-lg">
+    <main class="relative z-20 flex-1 flex flex-col items-center justify-center text-center px-4 sm:px-6 py-12 sm:py-16">
+      <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-4 sm:mb-6 text-white drop-shadow-lg">
         Track your job search like a pro 🚀
       </h2>
-      <p class="max-w-xl text-lg mb-10 text-white drop-shadow-md">
+      <p class="max-w-xl text-base sm:text-lg mb-8 sm:mb-10 text-white drop-shadow-md">
         Manage your applications, monitor progress, and stay organized —
         whether you're a candidate or a recruiter.
       </p>
       <RouterLink
         :to="userStore.user ? '/dashboard' : '/signup'"
-        class="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 transform hover:scale-105"
+        class="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 transform hover:scale-105 text-sm sm:text-base"
       >
-        <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4 sm:w-5 sm:h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
         </svg>
         {{ userStore.user ? 'Go to Dashboard' : 'Get Started' }}
