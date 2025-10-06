@@ -126,7 +126,12 @@ onMounted(() => {
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1" for="password">Password</label>
+            <div class="flex justify-between items-center mb-1">
+              <label class="block text-sm font-medium text-gray-700" for="password">Password</label>
+              <RouterLink to="/forgot-password" class="text-sm text-blue-600 hover:underline">
+                Forgot password?
+              </RouterLink>
+            </div>
             <input
               id="password"
               type="password"

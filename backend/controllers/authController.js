@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import { OAuth2Client } from "google-auth-library";
+import { sendPasswordResetEmail, sendWelcomeEmail } from "../services/emailService.js";
 // GitHub OAuth using authorization code flow
 
 const makeJwt = (user) =>
@@ -43,6 +44,11 @@ export const signup = async (req, res) => {
     });
 
     await newUser.save();
+
+    // Send welcome email (don't wait for it to complete)
+    sendWelcomeEmail(newUser.email, newUser.name).catch(error => {
+      console.error('Failed to send welcome email:', error);
+    });
 
     // Create JWT token
     const token = jwt.sign(
@@ -435,5 +441,128 @@ export const deleteAccount = async (req, res) => {
   } catch (error) {
     console.error("Delete account error:", error.message);
     res.status(500).json({ message: "Server error deleting account." });
+  }
+};
+
+/**
+ * Request password reset
+ */
+export const requestPasswordReset = async (req, res) => {
+  try {
+    const { email } = req.body;
+    console.log(`Password reset requested for email: ${email}`);
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required." });
+    }
+
+    // Check if user exists
+    const user = await User.findOne({ email });
+    if (!user) {
+      console.log(`User not found for email: ${email}`);
+      // Don't reveal if user exists or not for security
+      return res.json({ message: "If an account with that email exists, password reset instructions have been sent." });
+    }
+
+    console.log(`User found: ${user.name} (${user.email})`);
+
+    // Check if user has a password (not OAuth-only)
+    if (!user.password || user.oauthProvider) {
+      console.log(`User ${email} is OAuth-only, cannot reset password`);
+      return res.status(400).json({ 
+        message: "This account was created with Google. Please use 'Sign in with Google' instead of password reset." 
+      });
+    }
+
+    // Generate reset token
+    const resetToken = jwt.sign(
+      { id: user._id, purpose: 'password-reset' },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    console.log(`Generated reset token for ${email}`);
+
+    // Store reset token in user document
+    await User.findByIdAndUpdate(user._id, { 
+      resetToken,
+      resetTokenExpires: new Date(Date.now() + 3600000) // 1 hour from now
+    });
+
+    console.log(`Reset token stored in database for ${email}`);
+
+    // Send password reset email
+    try {
+      console.log(`Attempting to send password reset email to ${email}`);
+      await sendPasswordResetEmail(email, resetToken, user.name);
+      console.log(`✅ Password reset email sent successfully to ${email}`);
+    } catch (emailError) {
+      console.error(`❌ Failed to send password reset email to ${email}:`, emailError);
+      // Still return success to user for security (don't reveal if email failed)
+    }
+
+    res.json({ 
+      message: "If an account with that email exists, password reset instructions have been sent."
+    });
+  } catch (error) {
+    console.error("Request password reset error:", error.message);
+    res.status(500).json({ message: "Server error requesting password reset." });
+  }
+};
+
+/**
+ * Reset password with token
+ */
+export const resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res.status(400).json({ message: "Token and new password are required." });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters long." });
+    }
+
+    // Verify token
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (error) {
+      return res.status(400).json({ message: "Invalid or expired reset token." });
+    }
+
+    // Check if token is for password reset
+    if (decoded.purpose !== 'password-reset') {
+      return res.status(400).json({ message: "Invalid reset token." });
+    }
+
+    // Find user and verify token matches
+    const user = await User.findOne({ 
+      _id: decoded.id, 
+      resetToken: token,
+      resetTokenExpires: { $gt: new Date() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired reset token." });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update password and clear reset token
+    await User.findByIdAndUpdate(user._id, {
+      password: hashedPassword,
+      resetToken: undefined,
+      resetTokenExpires: undefined
+    });
+
+    res.json({ message: "Password reset successfully." });
+  } catch (error) {
+    console.error("Reset password error:", error.message);
+    res.status(500).json({ message: "Server error resetting password." });
   }
 };

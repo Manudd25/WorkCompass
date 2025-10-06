@@ -1,5 +1,5 @@
 import express from "express";
-import { signup, login, googleAuth, createCandidate, listCandidates, updateCandidate, deleteCandidate, getProfile, updateProfile, changePassword, deleteAccount } from "../controllers/authController.js";
+import { signup, login, googleAuth, createCandidate, listCandidates, updateCandidate, deleteCandidate, getProfile, updateProfile, changePassword, deleteAccount, requestPasswordReset, resetPassword } from "../controllers/authController.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -8,6 +8,8 @@ const router = express.Router();
 router.post("/signup", signup);
 router.post("/login", login);
 router.post("/google", googleAuth);
+router.post("/forgot-password", requestPasswordReset);
+router.post("/reset-password", resetPassword);
 
 // Profile management (authenticated users)
 router.get("/profile", authMiddleware, getProfile);

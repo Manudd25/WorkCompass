@@ -1,6 +1,8 @@
-import { createRouter, createWebHistory } from "vue-router";
+import { createRouter, createWebHashHistory } from "vue-router";
 import Login from "../views/Login.vue";
 import Signup from "../views/Signup.vue";
+import ForgotPassword from "../views/ForgotPassword.vue";
+import ResetPassword from "../views/ResetPassword.vue";
 import Dashboard from "../views/Dashboard.vue";
 import LandingPage from "../views/LandingPage.vue";
 import Applications from "../views/Applications.vue";
@@ -17,6 +19,8 @@ const routes = [
     { path: "/", name: "LandingPage", component: LandingPage },
     { path: "/login", name: "Login", component: Login },
     { path: "/signup", name: "Signup", component: Signup },
+    { path: "/forgot-password", name: "ForgotPassword", component: ForgotPassword },
+    { path: "/reset-password", name: "ResetPassword", component: ResetPassword },
     { path: "/dashboard", name: "Dashboard", component: Dashboard },
         { path: "/applications", name: "Applications", component: Applications },
         { path: "/applications/new", name: "NewApplication", component: NewApplication },
@@ -30,7 +34,7 @@ const routes = [
   ];
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHashHistory(),
   routes,
 });
 

@@ -97,6 +97,84 @@ export async function changePassword(passwordData, token) {
   return response.json();
 }
 
+export async function requestPasswordReset(email) {
+  const response = await fetch(`${API_BASE}/api/auth/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  
+  if (!response.ok) {
+    let errorMessage = 'Failed to send reset instructions';
+    
+    // Clone the response to read it as text if JSON parsing fails
+    const responseClone = response.clone();
+    
+    try {
+      const error = await response.json();
+      errorMessage = error.message || errorMessage;
+    } catch (parseError) {
+      // If response is not JSON (e.g., HTML error page)
+      console.error('Failed to parse error response:', parseError);
+      
+      try {
+        const responseText = await responseClone.text();
+        console.error('Response text:', responseText.substring(0, 200)); // First 200 chars
+      } catch (textError) {
+        console.error('Could not get response as text:', textError);
+      }
+      
+      if (response.status === 404) {
+        errorMessage = 'Password reset feature is not available yet. Please contact support.';
+      } else {
+        errorMessage = `Server error (${response.status}): ${response.statusText}`;
+      }
+    }
+    throw new Error(errorMessage);
+  }
+  
+  return response.json();
+}
+
+export async function resetPassword(token, newPassword) {
+  const response = await fetch(`${API_BASE}/api/auth/reset-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, newPassword }),
+  });
+  
+  if (!response.ok) {
+    let errorMessage = 'Failed to reset password';
+    
+    // Clone the response to read it as text if JSON parsing fails
+    const responseClone = response.clone();
+    
+    try {
+      const error = await response.json();
+      errorMessage = error.message || errorMessage;
+    } catch (parseError) {
+      // If response is not JSON (e.g., HTML error page)
+      console.error('Failed to parse error response:', parseError);
+      
+      try {
+        const responseText = await responseClone.text();
+        console.error('Response text:', responseText.substring(0, 200)); // First 200 chars
+      } catch (textError) {
+        console.error('Could not get response as text:', textError);
+      }
+      
+      if (response.status === 404) {
+        errorMessage = 'Password reset feature is not available yet. Please contact support.';
+      } else {
+        errorMessage = `Server error (${response.status}): ${response.statusText}`;
+      }
+    }
+    throw new Error(errorMessage);
+  }
+  
+  return response.json();
+}
+
 export async function deleteAccount(token) {
   const response = await fetch(`${API_BASE}/api/auth/profile`, {
     method: "DELETE",
