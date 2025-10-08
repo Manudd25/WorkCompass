@@ -170,3 +170,15 @@ export const sendWelcomeEmail = async (email, userName) => {
     return { success: false, error: error.message };
   }
 };
+
+export const sendFeedbackEmail = async (mailOptions) => {
+  try {
+    const transporter = getTransporter();
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Feedback email sent:', info.messageId);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('Error sending feedback email:', error);
+    throw error;
+  }
+};

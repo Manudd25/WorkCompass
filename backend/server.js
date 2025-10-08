@@ -17,6 +17,7 @@ app.use(cors({
   origin: [
     "https://workcompassapp.z6.web.core.windows.net",
     "http://localhost:5173", // For local development
+    "http://localhost:5174", // Alternative local port
     "http://localhost:3000"  // Alternative local port
   ],
   credentials: true,
@@ -35,6 +36,17 @@ app.get("/", (req, res) => {
 // Routes
 app.use("/api/auth", authRoutes); // signup/login
 app.use("/api/applications", applicationsRoutes); // CRUD routes protected by authMiddleware
+
+// Direct feedback route (public)
+app.post("/api/feedback", async (req, res) => {
+  try {
+    const { submitFeedback } = await import("./controllers/authController.js");
+    await submitFeedback(req, res);
+  } catch (error) {
+    console.error("Error importing submitFeedback:", error);
+    res.status(500).json({ message: "Server error." });
+  }
+});
 
 // Start server
 const PORT = process.env.PORT || 3000;

@@ -310,3 +310,18 @@ export async function deleteCandidate(candidateId, token) {
   
   return response.json();
 }
+
+export async function submitFeedback(feedbackData) {
+  const response = await fetch(`${API_BASE}/api/feedback`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(feedbackData),
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to submit feedback');
+  }
+  
+  return response.json();
+}

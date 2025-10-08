@@ -1,6 +1,8 @@
 <script setup>
+import { ref } from "vue";
 import { RouterLink, useRouter } from "vue-router";
 import { useUserStore } from "../store/userStore.js";
+import { submitFeedback } from "../../services/api.js";
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -8,6 +10,48 @@ const userStore = useUserStore();
 const handleLogout = () => {
   userStore.logout();
   router.push("/");
+};
+
+// Feedback form state
+const showFeedbackForm = ref(false);
+const feedback = ref({
+  name: "",
+  email: "",
+  message: "",
+  rating: 5
+});
+const isSubmittingFeedback = ref(false);
+const feedbackMessage = ref("");
+
+const toggleFeedbackForm = () => {
+  showFeedbackForm.value = !showFeedbackForm.value;
+  if (!showFeedbackForm.value) {
+    // Reset form when closing
+    feedback.value = { name: "", email: "", message: "", rating: 5 };
+    feedbackMessage.value = "";
+  }
+};
+
+const submitFeedbackForm = async () => {
+  if (!feedback.value.message.trim()) {
+    feedbackMessage.value = "Please enter your feedback message.";
+    return;
+  }
+
+  isSubmittingFeedback.value = true;
+  feedbackMessage.value = "";
+
+  try {
+    await submitFeedback(feedback.value);
+    feedbackMessage.value = "Thank you for your feedback! We'll review it soon.";
+    setTimeout(() => {
+      toggleFeedbackForm();
+    }, 2000);
+  } catch (error) {
+    feedbackMessage.value = "Failed to submit feedback. Please try again.";
+  } finally {
+    isSubmittingFeedback.value = false;
+  }
 };
 </script>
 
@@ -96,5 +140,109 @@ const handleLogout = () => {
     <footer class="relative z-20 bg-white bg-opacity-90 backdrop-blur-sm text-center py-4 text-gray-500 text-sm">
       © 2025 WorkCompass — Made with ❤️ for ambitious job seekers and recruiters
     </footer>
+
+    <!-- Floating Feedback Chat Icon -->
+    <div class="fixed bottom-6 right-6 z-50">
+      <!-- Chat Icon Button -->
+      <button
+        v-if="!showFeedbackForm"
+        @click="toggleFeedbackForm"
+        class="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
+        title="Send us feedback"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+        </svg>
+      </button>
+
+      <!-- Feedback Form Modal -->
+      <div
+        v-if="showFeedbackForm"
+        class="bg-white rounded-lg shadow-2xl border border-gray-200 w-80 max-w-sm"
+      >
+        <!-- Header -->
+        <div class="bg-blue-600 text-white p-4 rounded-t-lg flex justify-between items-center">
+          <h3 class="font-semibold text-lg">Send Feedback</h3>
+          <button
+            @click="toggleFeedbackForm"
+            class="text-white hover:text-gray-200 transition-colors"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Form Content -->
+        <div class="p-4">
+          <form @submit.prevent="submitFeedbackForm" class="space-y-4">
+            <!-- Rating -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">How would you rate us?</label>
+              <div class="flex space-x-1">
+                <button
+                  v-for="star in 5"
+                  :key="star"
+                  type="button"
+                  @click="feedback.rating = star"
+                  class="text-2xl transition-colors"
+                  :class="star <= feedback.rating ? 'text-yellow-400' : 'text-gray-300'"
+                >
+                  ★
+                </button>
+              </div>
+            </div>
+
+            <!-- Name (Optional) -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Name (Optional)</label>
+              <input
+                v-model="feedback.name"
+                type="text"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                placeholder="Your name"
+              />
+            </div>
+
+            <!-- Email (Optional) -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Email (Optional)</label>
+              <input
+                v-model="feedback.email"
+                type="email"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                placeholder="your@email.com"
+              />
+            </div>
+
+            <!-- Message -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Message *</label>
+              <textarea
+                v-model="feedback.message"
+                rows="3"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none"
+                placeholder="Tell us what you think..."
+                required
+              ></textarea>
+            </div>
+
+            <!-- Submit Button -->
+            <button
+              type="submit"
+              :disabled="isSubmittingFeedback || !feedback.message.trim()"
+              class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            >
+              {{ isSubmittingFeedback ? 'Sending...' : 'Send Feedback' }}
+            </button>
+
+            <!-- Message -->
+            <p v-if="feedbackMessage" class="text-sm text-center" :class="feedbackMessage.includes('Thank you') ? 'text-green-600' : 'text-red-600'">
+              {{ feedbackMessage }}
+            </p>
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
 </template>

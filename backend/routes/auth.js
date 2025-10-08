@@ -1,5 +1,5 @@
 import express from "express";
-import { signup, login, googleAuth, createCandidate, listCandidates, updateCandidate, deleteCandidate, getProfile, updateProfile, changePassword, deleteAccount, requestPasswordReset, resetPassword } from "../controllers/authController.js";
+import { signup, login, googleAuth, createCandidate, listCandidates, updateCandidate, deleteCandidate, getProfile, updateProfile, changePassword, deleteAccount, requestPasswordReset, resetPassword, submitFeedback } from "../controllers/authController.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -22,6 +22,9 @@ router.post("/candidates", authMiddleware, createCandidate);
 router.get("/candidates", authMiddleware, listCandidates);
 router.put("/candidates/:id", authMiddleware, updateCandidate);
 router.delete("/candidates/:id", authMiddleware, deleteCandidate);
+
+// Feedback route (public)
+router.post("/feedback", submitFeedback);
 
 export default router;
 

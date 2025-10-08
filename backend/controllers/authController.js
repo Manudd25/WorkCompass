@@ -566,3 +566,62 @@ export const resetPassword = async (req, res) => {
     res.status(500).json({ message: "Server error resetting password." });
   }
 };
+
+export const submitFeedback = async (req, res) => {
+  try {
+    const { name, email, message, rating } = req.body;
+    
+    console.log(`📧 New feedback received:`, { name, email, rating, message: message.substring(0, 50) + '...' });
+    
+    // Send feedback email to your personal email
+    const feedbackEmail = {
+      from: `"WorkCompass Feedback" <${process.env.EMAIL_FROM || 'noreply@workcompass.com'}>`,
+      to: process.env.SMTP_USER, // Your personal email
+      subject: `WorkCompass Feedback - ${rating}⭐ Rating`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
+          <div style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; padding: 20px; border-radius: 10px 10px 0 0; text-align: center;">
+            <h1 style="margin: 0; font-size: 24px;">💬 New WorkCompass Feedback</h1>
+          </div>
+          
+          <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="display: flex; align-items: center; margin-bottom: 20px;">
+              <div style="font-size: 32px; margin-right: 15px;">${'⭐'.repeat(rating)}${'☆'.repeat(5-rating)}</div>
+              <div>
+                <strong style="font-size: 18px; color: #2563eb;">${rating}/5 Stars</strong>
+              </div>
+            </div>
+            
+            ${name ? `<p><strong>Name:</strong> ${name}</p>` : ''}
+            ${email ? `<p><strong>Email:</strong> ${email}</p>` : ''}
+            
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <strong>Message:</strong>
+              <p style="margin: 10px 0 0 0; line-height: 1.6; color: #333;">${message}</p>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+              <p style="color: #6b7280; font-size: 14px; margin: 0;">
+                Received on ${new Date().toLocaleString()}
+              </p>
+            </div>
+          </div>
+        </div>
+      `
+    };
+
+    try {
+      const { sendFeedbackEmail } = await import("../services/emailService.js");
+      await sendFeedbackEmail(feedbackEmail);
+      console.log(`✅ Feedback email sent successfully to ${process.env.SMTP_USER}`);
+    } catch (emailError) {
+      console.error(`❌ Failed to send feedback email:`, emailError);
+      // Don't fail the request if email fails
+    }
+
+    res.json({ message: "Feedback submitted successfully!" });
+  } catch (error) {
+    console.error("Submit feedback error:", error.message);
+    res.status(500).json({ message: "Server error submitting feedback." });
+  }
+};
