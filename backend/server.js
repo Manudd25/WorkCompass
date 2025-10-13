@@ -15,14 +15,14 @@ const app = express();
 // Middlewares
 app.use(cors({
   origin: [
-    "https://workcompassapp.z6.web.core.windows.net",
     "https://www.workcompass.net",
     "https://workcompass.net",
     "http://localhost:5173", // For local development
     "http://localhost:5174", // Alternative local port
     "http://localhost:3000",  // Alternative local port
     "https://workcompass.netlify.app",
-    "https://68ed3360cbf69b531b9f96a7--workcompassapp.netlify.app"
+    "https://68ed3360cbf69b531b9f96a7--workcompassapp.netlify.app",
+    "https://workcompass-aubna8bcgub5f3bt.westeurope-01.azurewebsites.net"
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
