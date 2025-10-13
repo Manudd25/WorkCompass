@@ -16,6 +16,8 @@ const app = express();
 app.use(cors({
   origin: [
     "https://workcompassapp.z6.web.core.windows.net",
+    "https://www.workcompass.net",
+    "https://workcompass.net",
     "http://localhost:5173", // For local development
     "http://localhost:5174", // Alternative local port
     "http://localhost:3000"  // Alternative local port

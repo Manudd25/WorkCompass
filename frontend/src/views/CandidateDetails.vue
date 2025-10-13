@@ -2,7 +2,7 @@
 import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useUserStore } from "../store/userStore.js";
-import { getCandidates, getApplications, createApplication, updateApplication, deleteApplication } from "../../services/api.js";
+import { getCandidates, getApplications, createApplication, updateApplication, deleteApplication, updateCandidate, deleteCandidate } from "../../services/api.js";
 
 const route = useRoute();
 const router = useRouter();
@@ -136,32 +136,28 @@ const saveCandidate = async () => {
     isUpdating.value = true;
     const token = userStore.token;
     const id = route.params.id;
-    const res = await axios.put(
-      `http://localhost:8000/api/auth/candidates/${encodeURIComponent(id)}`,
-      {
-        name: editName.value,
-        email: editEmail.value,
-        wishedSalary: editWishedSalary.value,
-        earlyStartDate: editEarlyStartDate.value,
-        candidateNotes: editCandidateNotes.value,
-        jobTitle: editJobTitle.value,
-        company: editCompany.value,
-        experience: editExperience.value,
-        skills: editSkills.value,
-        location: editLocation.value
-      },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    candidate.value = res.data;
+    const res = await updateCandidate(id, {
+      name: editName.value,
+      email: editEmail.value,
+      wishedSalary: editWishedSalary.value,
+      earlyStartDate: editEarlyStartDate.value,
+      candidateNotes: editCandidateNotes.value,
+      jobTitle: editJobTitle.value,
+      company: editCompany.value,
+      experience: editExperience.value,
+      skills: editSkills.value,
+      location: editLocation.value
+    }, token);
+    candidate.value = res;
     isEditing.value = false;
   } catch (e) {
-    errorMessage.value = e?.response?.data?.message || "Failed to update candidate.";
+    errorMessage.value = e?.message || "Failed to update candidate.";
   } finally {
     isUpdating.value = false;
   }
 };
 
-const deleteCandidate = async () => {
+const deleteCandidateHandler = async () => {
   if (!confirm("Are you sure you want to delete this candidate? This will also delete all their applications.")) {
     return;
   }
@@ -171,12 +167,10 @@ const deleteCandidate = async () => {
     isDeleting.value = true;
     const token = userStore.token;
     const id = route.params.id;
-    await axios.delete(`http://localhost:8000/api/auth/candidates/${encodeURIComponent(id)}`, { 
-      headers: { Authorization: `Bearer ${token}` } 
-    });
+    await deleteCandidate(id, token);
     router.push("/candidates");
   } catch (e) {
-    errorMessage.value = e?.response?.data?.message || "Failed to delete candidate.";
+    errorMessage.value = e?.message || "Failed to delete candidate.";
   } finally {
     isDeleting.value = false;
   }
@@ -222,7 +216,7 @@ onMounted(fetchData);
           <h3 class="text-xl font-semibold">Candidate Information</h3>
           <div v-if="!isEditing" class="flex gap-2">
             <button @click="startEdit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Edit</button>
-            <button @click="deleteCandidate" :disabled="isDeleting" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-60">
+            <button @click="deleteCandidateHandler" :disabled="isDeleting" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-60">
               {{ isDeleting ? "Deleting..." : "Delete" }}
             </button>
           </div>
