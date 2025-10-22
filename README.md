@@ -31,4 +31,5 @@ Backend
 🌿 dotenv
  for environment variables
 
- Demo here: https://workcompassapp.z6.web.core.windows.net/
+ Website: https://www.workcompass.net
+
