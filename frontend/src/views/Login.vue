@@ -28,7 +28,10 @@ const handleLogin = async () => {
       password: password.value,
     });
     userStore.setUser(res.user, res.token);
-    router.push("/dashboard");
+    
+    // Redirect to intended page or dashboard
+    const redirectTo = router.currentRoute.value.query.redirect || "/dashboard";
+    router.push(redirectTo);
   } catch (error) {
     errorMessage.value = error?.message || "Login failed. Please try again.";
   } finally {
@@ -78,7 +81,10 @@ const handleGoogleCredentialResponse = async (response) => {
     if (!idToken) return;
     const res = await googleAuth(idToken);
     userStore.setUser(res.user, res.token);
-    router.push("/dashboard");
+    
+    // Redirect to intended page or dashboard
+    const redirectTo = router.currentRoute.value.query.redirect || "/dashboard";
+    router.push(redirectTo);
   } catch (err) {
     errorMessage.value = err?.message || "Google sign-in failed.";
   }

@@ -169,7 +169,7 @@ const submitFeedbackForm = async () => {
 
         <div class="grid md:grid-cols-2 gap-8">
           <!-- Wellness Monitoring -->
-          <RouterLink :to="userStore.user ? '/wellness/monitoring' : '/signup'" class="bg-white rounded-xl p-6 border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 block hover:-translate-y-1">
+          <RouterLink :to="userStore.user ? '/wellness/monitoring' : '/login?redirect=/wellness/monitoring'" class="bg-white rounded-xl p-6 border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 block hover:-translate-y-1">
             <div class="mb-4">
               <img src="/images/wellnessmonitoring.jpg" alt="Wellness Monitoring" class="w-full h-48 object-cover rounded-lg">
             </div>
@@ -193,7 +193,7 @@ const submitFeedbackForm = async () => {
           </RouterLink>
 
           <!-- Wellness Resources -->
-          <RouterLink :to="userStore.user ? '/wellness/resources' : '/signup'" class="bg-white rounded-xl p-6 border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 block hover:-translate-y-1">
+          <RouterLink :to="userStore.user ? '/wellness/resources' : '/login?redirect=/wellness/resources'" class="bg-white rounded-xl p-6 border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 block hover:-translate-y-1">
             <div class="mb-4">
               <img src="/images/wellnessresource.jpg" alt="Wellness Resources" class="w-full h-48 object-cover rounded-lg">
             </div>
@@ -235,7 +235,7 @@ const submitFeedbackForm = async () => {
 
         <div class="max-w-4xl mx-auto">
           <!-- Discussion Forum -->
-          <RouterLink :to="userStore.user ? '/community/forum' : '/signup'" class="bg-white rounded-xl p-8 shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300 block hover:-translate-y-1">
+          <RouterLink :to="userStore.user ? '/community/forum' : '/login?redirect=/community/forum'" class="bg-white rounded-xl p-8 shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300 block hover:-translate-y-1">
             <div class="mb-6">
               <img src="/images/community.jpg" alt="Community Discussions" class="w-full h-48 object-cover rounded-lg">
             </div>
