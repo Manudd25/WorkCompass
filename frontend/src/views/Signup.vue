@@ -2,6 +2,7 @@
 import { ref, onMounted } from "vue";
 import { RouterLink, useRouter } from "vue-router";
 import { useUserStore } from "../store/userStore.js";
+import Footer from "../components/Footer.vue";
 import { signup, googleAuth } from "../../services/api.js";
 
 const router = useRouter();
@@ -234,8 +235,6 @@ onMounted(() => {
     </main>
 
     <!-- Footer -->
-    <footer class="bg-white text-center py-4 text-gray-500 text-sm">
-      © 2025 WorkCompass — Made with ❤️ for ambitious job seekers and recruiters
-    </footer>
+    <Footer />
   </div>
 </template>

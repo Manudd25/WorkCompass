@@ -2,6 +2,8 @@
 import { ref } from "vue";
 import { RouterLink, useRouter } from "vue-router";
 import { useUserStore } from "../store/userStore.js";
+import AIAgent from "../components/AIAgent.vue";
+import Footer from "../components/Footer.vue";
 import { submitFeedback } from "../../services/api.js";
 
 const router = useRouter();
@@ -71,7 +73,7 @@ const submitFeedbackForm = async () => {
     </video>
 
     <!-- Overlay for better text readability -->
-    <div class="absolute inset-0 bg-black bg-opacity-40 z-10"></div>
+    <div class="absolute inset-0 bg-black bg-opacity-10 z-10"></div>
 
     <!-- Header -->
     <header class="relative z-20 flex justify-between items-center px-4 sm:px-8 py-4 bg-white bg-opacity-90 backdrop-blur-sm shadow-md">
@@ -87,6 +89,12 @@ const submitFeedbackForm = async () => {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z"></path>
             </svg>
             <span class="hidden sm:inline">Dashboard</span>
+          </RouterLink>
+          <RouterLink to="/feedback" class="text-gray-600 hover:text-blue-600 hover:bg-blue-50 px-2 sm:px-4 py-2 rounded-lg font-medium transition-all duration-200 border border-transparent hover:border-blue-200 text-sm sm:text-base">
+            <svg class="w-4 h-4 inline mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+            </svg>
+            <span class="hidden sm:inline">Contact</span>
           </RouterLink>
           <button @click="handleLogout" class="text-gray-600 hover:text-red-600 hover:bg-red-50 px-2 sm:px-4 py-2 rounded-lg font-medium transition-all duration-200 border border-transparent hover:border-red-200 text-sm sm:text-base">
             <svg class="w-4 h-4 inline mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -112,12 +120,22 @@ const submitFeedbackForm = async () => {
             </svg>
             <span class="hidden sm:inline">Sign Up</span>
           </RouterLink>
+          <RouterLink
+            to="/feedback"
+            class="text-gray-600 hover:text-blue-600 hover:bg-blue-50 px-2 sm:px-4 py-2 rounded-lg font-medium transition-all duration-200 border border-transparent hover:border-blue-200 text-sm sm:text-base"
+            title="Contact Us"
+          >
+            <svg class="w-4 h-4 inline mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+            </svg>
+            <span class="hidden sm:inline">Contact</span>
+          </RouterLink>
         </template>
       </nav>
     </header>
 
     <!-- Hero -->
-    <main class="relative z-20 flex-1 flex flex-col items-center justify-center text-center px-4 sm:px-6 py-12 sm:py-16">
+    <main class="relative z-20 flex flex-col items-center justify-center text-center px-4 sm:px-6 py-8 sm:py-12 min-h-[720px]">
       <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-4 sm:mb-6 text-white drop-shadow-lg">
         Track your job search like a pro 🚀
       </h2>
@@ -136,10 +154,132 @@ const submitFeedbackForm = async () => {
       </RouterLink>
     </main>
 
+    <!-- Mental Health & Wellness Section -->
+    <section class="relative z-20 bg-white bg-opacity-95 backdrop-blur-sm py-16 px-4 sm:px-6">
+      <div class="max-w-6xl mx-auto">
+        <div class="text-center mb-12">
+          <h3 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">
+            Mental Health & Wellness Support
+          </h3>
+          <p class="text-lg text-gray-600 max-w-3xl mx-auto">
+            We integrate features that monitor employee psychological well-being, 
+            offering resources like wellness tracking tools and simple emotional state check-ins.
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8">
+          <!-- Wellness Monitoring -->
+          <RouterLink :to="userStore.user ? '/wellness/monitoring' : '/signup'" class="bg-white rounded-xl p-6 border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 block hover:-translate-y-1">
+            <div class="mb-4">
+              <img src="/images/wellnessmonitoring.jpg" alt="Wellness Monitoring" class="w-full h-48 object-cover rounded-lg">
+            </div>
+            <div class="flex items-center mb-3">
+              <div class="w-12 h-12 bg-emerald-500 rounded-lg flex items-center justify-center mr-4">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+              </div>
+              <h4 class="text-xl font-semibold text-gray-800">Wellness Monitoring</h4>
+            </div>
+            <p class="text-gray-600 mb-4">
+              Regular check-ins on emotional state and tools to track psychological well-being over time.
+            </p>
+            <ul class="text-sm text-gray-500 space-y-1 mb-4">
+              <li>• Personalized wellness questionnaires</li>
+              <li>• Daily mood tracking</li>
+              <li>• Automatic reports for managers</li>
+            </ul>
+            <span class="text-blue-600 font-semibold text-sm hover:text-blue-700">Explore feature →</span>
+          </RouterLink>
+
+          <!-- Wellness Resources -->
+          <RouterLink :to="userStore.user ? '/wellness/resources' : '/signup'" class="bg-white rounded-xl p-6 border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 block hover:-translate-y-1">
+            <div class="mb-4">
+              <img src="/images/wellnessresource.jpg" alt="Wellness Resources" class="w-full h-48 object-cover rounded-lg">
+            </div>
+            <div class="flex items-center mb-3">
+              <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center mr-4">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                </svg>
+              </div>
+              <h4 class="text-xl font-semibold text-gray-800">Wellness Resources</h4>
+            </div>
+            <p class="text-gray-600 mb-4">
+              A comprehensive library of resources to improve employee engagement and productivity.
+            </p>
+            <ul class="text-sm text-gray-500 space-y-1 mb-4">
+              <li>• Guided meditations and mindfulness</li>
+              <li>• Stress management exercises</li>
+              <li>• Educational content on mental health</li>
+            </ul>
+            <span class="text-blue-600 font-semibold text-sm hover:text-blue-700">Explore resources →</span>
+          </RouterLink>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Discussion Forum Section -->
+    <section class="relative z-20 bg-gradient-to-br from-gray-50 to-blue-50 py-16 px-4 sm:px-6">
+      <div class="max-w-6xl mx-auto">
+        <div class="text-center mb-12">
+          <h3 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">
+            Discussion Forum
+          </h3>
+          <p class="text-lg text-gray-600 max-w-3xl mx-auto">
+            Join our community discussions to share experiences, get advice from industry professionals, 
+            and connect with like-minded individuals in your field.
+          </p>
+        </div>
+
+        <div class="max-w-4xl mx-auto">
+          <!-- Discussion Forum -->
+          <RouterLink :to="userStore.user ? '/community/forum' : '/signup'" class="bg-white rounded-xl p-8 shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300 block hover:-translate-y-1">
+            <div class="mb-6">
+              <img src="/images/community.jpg" alt="Community Discussions" class="w-full h-48 object-cover rounded-lg">
+            </div>
+            <div class="flex items-center mb-6">
+              <div class="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center mr-4">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                </svg>
+              </div>
+              <h4 class="text-2xl font-semibold text-gray-800">Community Discussions</h4>
+            </div>
+            <p class="text-gray-600 mb-6">
+              Participate in community discussions, share your experiences and get advice 
+              from other professionals in the industry.
+            </p>
+            <div class="space-y-4 mb-4">
+              <div class="flex items-center text-sm text-gray-500">
+                <svg class="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                Weekly themed discussions
+              </div>
+              <div class="flex items-center text-sm text-gray-500">
+                <svg class="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                Q&A with industry experts
+              </div>
+              <div class="flex items-center text-sm text-gray-500">
+                <svg class="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                Professional networking and connections
+              </div>
+            </div>
+            <span class="text-orange-600 font-semibold text-sm hover:text-orange-700">Join discussion →</span>
+          </RouterLink>
+        </div>
+
+      </div>
+    </section>
+
     <!-- Footer -->
-    <footer class="relative z-20 bg-white bg-opacity-90 backdrop-blur-sm text-center py-4 text-gray-500 text-sm">
-      © 2025 WorkCompass — Made with ❤️ for ambitious job seekers and recruiters
-    </footer>
+    <Footer class="relative z-20 bg-white bg-opacity-95 backdrop-blur-sm" />
 
     <!-- Floating Feedback Chat Icon -->
     <div class="fixed bottom-6 right-6 z-50">
@@ -244,5 +384,11 @@ const submitFeedbackForm = async () => {
         </div>
       </div>
     </div>
+
+    <!-- AI Agent - Positioned as floating widget -->
+    <div class="fixed bottom-6 right-6 z-50">
+      <AIAgent />
+    </div>
+
   </div>
 </template>

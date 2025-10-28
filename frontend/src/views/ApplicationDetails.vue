@@ -3,6 +3,8 @@ import { onMounted, ref } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { useUserStore } from "../store/userStore.js";
 import ApplicationCard from "../components/ApplicationCard.vue";
+import AIInsights from "../components/AIInsights.vue";
+import InterviewPrep from "../components/InterviewPrep.vue";
 import { getApplications, updateApplication } from "../../services/api.js";
 
 const route = useRoute();
@@ -113,6 +115,15 @@ const saveStatus = async () => {
             <span v-if="updateMessage" class="text-sm" :class="updateMessage.includes('Failed') ? 'text-red-600' : 'text-green-700'">{{ updateMessage }}</span>
           </div>
         </div>
+      </div>
+
+      <!-- AI Features Section -->
+      <div v-if="application" class="space-y-6">
+        <!-- AI Insights -->
+        <AIInsights :application="application" />
+        
+        <!-- Interview Preparation (only show if status is Interview) -->
+        <InterviewPrep v-if="application.status === 'Interview'" :application="application" />
       </div>
     </main>
 

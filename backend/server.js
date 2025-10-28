@@ -3,6 +3,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import applicationsRoutes from "./routes/applications.js";
 import authRoutes from "./routes/auth.js";
+import aiRoutes from "./routes/ai.js";
+import wellnessRoutes from "./routes/wellness.js";
 import connectDB from "./config/db.js";
 
 dotenv.config();
@@ -26,8 +28,10 @@ app.use(cors({
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  optionsSuccessStatus: 200 // For legacy browser support
 }));
+
 
 app.use(express.json());
 
@@ -40,6 +44,8 @@ app.get("/", (req, res) => {
 // Routes
 app.use("/api/auth", authRoutes); // signup/login
 app.use("/api/applications", applicationsRoutes); // CRUD routes protected by authMiddleware
+app.use("/api/ai", aiRoutes); // AI features routes protected by authMiddleware
+app.use("/api/wellness", wellnessRoutes); // Wellness routes protected by authMiddleware
 
 // Direct feedback route (public)
 app.post("/api/feedback", async (req, res) => {
@@ -50,6 +56,22 @@ app.post("/api/feedback", async (req, res) => {
     console.error("Error importing submitFeedback:", error);
     res.status(500).json({ message: "Server error." });
   }
+});
+
+// 404 handler for undefined routes
+app.use((req, res) => {
+  res.status(404).json({ 
+    error: 'Route not found',
+    message: `Cannot ${req.method} ${req.originalUrl}`,
+    availableRoutes: [
+      'GET /',
+      'POST /api/auth/signup',
+      'POST /api/auth/login',
+      'POST /api/ai/guest-chat',
+      'GET /api/applications',
+      'GET /api/wellness/mood-entries'
+    ]
+  });
 });
 
 // Start server

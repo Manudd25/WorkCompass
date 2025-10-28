@@ -1,0 +1,931 @@
+<script setup>
+import { ref, onMounted, computed } from "vue";
+import { RouterLink } from "vue-router";
+import { useUserStore } from "../store/userStore.js";
+import Footer from "../components/Footer.vue";
+import jsPDF from 'jspdf';
+import {
+  getMoodEntries,
+  createMoodEntry,
+  updateMoodEntry,
+  deleteMoodEntry,
+  getWellnessAssessments,
+  createWellnessAssessment,
+  updateWellnessAssessment,
+  deleteWellnessAssessment
+} from "../services/wellnessService.js";
+
+const userStore = useUserStore();
+
+const moodEntries = ref([]);
+const wellnessAssessments = ref([]);
+
+const questionnaire = ref({
+  sleep: 7,
+  diet: 6,
+  exercise: 5,
+  workLife: 7,
+  social: 8,
+  overall: 8
+});
+
+// Pagination for assessments
+const currentPage = ref(1);
+const itemsPerPage = ref(5);
+const editingAssessment = ref(null);
+const editAssessmentForm = ref({
+  scores: {
+    sleep: 7,
+    diet: 6,
+    exercise: 5,
+    workLife: 7,
+    social: 8,
+    overall: 8
+  },
+  notes: ""
+});
+
+const currentDate = ref(new Date());
+const selectedMood = ref("");
+const moodEnergy = ref(5);
+const moodStress = ref(5);
+const moodNotes = ref("");
+
+// Edit functionality
+const editingEntry = ref(null);
+const editForm = ref({
+  mood: "",
+  energy: 5,
+  stress: 5,
+  notes: ""
+});
+
+const moods = ["😊 happy", "😌 calm", "😐 neutral", "😰 anxious", "😴 tired", "😃 excited", "😔 sad", "😤 frustrated"];
+
+const submitMoodEntry = async () => {
+  if (!selectedMood.value) {
+    alert("Please select your mood");
+    return;
+  }
+  
+  try {
+    const entry = await createMoodEntry({
+      date: currentDate.value.toISOString().split('T')[0],
+      mood: selectedMood.value,
+      energy: moodEnergy.value,
+      stress: moodStress.value,
+      notes: moodNotes.value
+    });
+    
+    moodEntries.value.unshift(entry);
+    
+    // Reset form
+    selectedMood.value = "";
+    moodEnergy.value = 5;
+    moodStress.value = 5;
+    moodNotes.value = "";
+    
+    alert("Mood entry saved successfully!");
+  } catch (error) {
+    console.error("Error creating mood entry:", error);
+    alert("Failed to save mood entry. Please try again.");
+  }
+};
+
+const editEntry = (entry) => {
+  editingEntry.value = entry;
+  editForm.value = {
+    mood: entry.mood,
+    energy: entry.energy,
+    stress: entry.stress,
+    notes: entry.notes
+  };
+};
+
+const saveEdit = async () => {
+  if (!editForm.value.mood) {
+    alert("Please select your mood");
+    return;
+  }
+  
+  try {
+    const updatedEntry = await updateMoodEntry(editingEntry.value._id, {
+      date: editingEntry.value.date,
+      mood: editForm.value.mood,
+      energy: editForm.value.energy,
+      stress: editForm.value.stress,
+      notes: editForm.value.notes
+    });
+    
+    const index = moodEntries.value.findIndex(e => e._id === editingEntry.value._id);
+    if (index > -1) {
+      moodEntries.value[index] = updatedEntry;
+    }
+    
+    editingEntry.value = null;
+    alert("Entry updated successfully!");
+  } catch (error) {
+    console.error("Error updating mood entry:", error);
+    alert("Failed to update entry. Please try again.");
+  }
+};
+
+const cancelEdit = () => {
+  editingEntry.value = null;
+  editForm.value = { mood: "", energy: 5, stress: 5, notes: "" };
+};
+
+const deleteEntry = async (entry) => {
+  if (confirm("Are you sure you want to delete this entry?")) {
+    try {
+      await deleteMoodEntry(entry._id);
+      const index = moodEntries.value.indexOf(entry);
+      if (index > -1) {
+        moodEntries.value.splice(index, 1);
+      }
+      alert("Entry deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting entry:", error);
+      alert("Failed to delete entry. Please try again.");
+    }
+  }
+};
+
+const moodClass = (mood) => {
+  const moodMap = {
+    "happy": "bg-green-100 text-green-800",
+    "calm": "bg-blue-100 text-blue-800",
+    "neutral": "bg-gray-100 text-gray-800",
+    "anxious": "bg-orange-100 text-orange-800",
+    "tired": "bg-purple-100 text-purple-800",
+    "excited": "bg-yellow-100 text-yellow-800",
+    "sad": "bg-blue-100 text-blue-800",
+    "frustrated": "bg-red-100 text-red-800"
+  };
+  return moodMap[mood] || "bg-gray-100 text-gray-800";
+};
+
+const submitAssessment = async () => {
+  // Calculate overall score
+  const scores = Object.values(questionnaire.value);
+  const overallScore = scores.reduce((sum, score) => sum + score, 0) / scores.length;
+  
+  try {
+    const newAssessment = await createWellnessAssessment({
+      date: new Date().toISOString().split('T')[0],
+      scores: { ...questionnaire.value },
+      overallScore: Math.round(overallScore * 10) / 10,
+      notes: ""
+    });
+    
+    // Add to assessments (most recent first)
+    wellnessAssessments.value.unshift(newAssessment);
+    
+    // Reset questionnaire
+    questionnaire.value = {
+      sleep: 7,
+      diet: 6,
+      exercise: 5,
+      workLife: 7,
+      social: 8,
+      overall: 8
+    };
+    
+    alert("Wellness assessment submitted successfully!");
+  } catch (error) {
+    console.error("Error submitting assessment:", error);
+    alert("Failed to submit assessment. Please try again.");
+  }
+};
+
+// Assessment CRUD functions
+const editAssessment = (assessment) => {
+  editingAssessment.value = assessment;
+  editAssessmentForm.value = {
+    scores: { ...assessment.scores },
+    notes: assessment.notes || ""
+  };
+};
+
+const saveAssessmentEdit = async () => {
+  if (!editingAssessment.value) return;
+  
+  // Calculate new overall score
+  const scores = Object.values(editAssessmentForm.value.scores);
+  const overallScore = scores.reduce((sum, score) => sum + score, 0) / scores.length;
+  
+  try {
+    const updatedAssessment = await updateWellnessAssessment(editingAssessment.value._id, {
+      date: new Date().toISOString().split('T')[0],
+      scores: { ...editAssessmentForm.value.scores },
+      overallScore: Math.round(overallScore * 10) / 10,
+      notes: editAssessmentForm.value.notes
+    });
+    
+    // Update in array
+    const index = wellnessAssessments.value.findIndex(a => a._id === editingAssessment.value._id);
+    if (index > -1) {
+      wellnessAssessments.value[index] = updatedAssessment;
+    }
+    
+    editingAssessment.value = null;
+    editAssessmentForm.value = {
+      scores: { sleep: 7, diet: 6, exercise: 5, workLife: 7, social: 8, overall: 8 },
+      notes: ""
+    };
+    
+    alert("Assessment updated successfully!");
+  } catch (error) {
+    console.error("Error updating assessment:", error);
+    alert("Failed to update assessment. Please try again.");
+  }
+};
+
+const cancelAssessmentEdit = () => {
+  editingAssessment.value = null;
+  editAssessmentForm.value = {
+    scores: { sleep: 7, diet: 6, exercise: 5, workLife: 7, social: 8, overall: 8 },
+    notes: ""
+  };
+};
+
+const deleteAssessment = async (assessment) => {
+  if (confirm("Are you sure you want to delete this assessment? This action cannot be undone.")) {
+    try {
+      await deleteWellnessAssessment(assessment._id);
+      const index = wellnessAssessments.value.findIndex(a => a._id === assessment._id);
+      if (index > -1) {
+        wellnessAssessments.value.splice(index, 1);
+      }
+      alert("Assessment deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting assessment:", error);
+      alert("Failed to delete assessment. Please try again.");
+    }
+  }
+};
+
+// Pagination functions
+const totalPages = computed(() => {
+  return Math.ceil(wellnessAssessments.value.length / itemsPerPage.value);
+});
+
+const paginatedAssessments = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value;
+  const end = start + itemsPerPage.value;
+  return wellnessAssessments.value.slice(start, end);
+});
+
+const goToPage = (page) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page;
+  }
+};
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++;
+  }
+};
+
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--;
+  }
+};
+
+const getScoreColor = (score) => {
+  if (score >= 8) return "text-green-600";
+  if (score >= 6) return "text-yellow-600";
+  return "text-red-600";
+};
+
+const downloadPDF = () => {
+  const reportData = generateReportData();
+  
+  // Create new PDF document
+  const doc = new jsPDF();
+  
+  // Set up colors
+  const primaryColor = [5, 150, 105]; // emerald-600
+  const textColor = [51, 65, 85]; // slate-700
+  const lightGray = [243, 244, 246]; // gray-100
+  
+  // Header
+  doc.setFillColor(...primaryColor);
+  doc.rect(0, 0, 210, 30, 'F');
+  
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(24);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Weekly Wellness Report', 105, 20, { align: 'center' });
+  
+  // Reset text color
+  doc.setTextColor(...textColor);
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Period: ${reportData.dateRange}`, 20, 45);
+  doc.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 55);
+  
+  let yPosition = 70;
+  
+  // Summary Section
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Summary', 20, yPosition);
+  yPosition += 15;
+  
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Average Wellness Score: ${reportData.averageWellnessScore}/10`, 20, yPosition);
+  yPosition += 10;
+  doc.text(`Total Assessments: ${reportData.assessments.length}`, 20, yPosition);
+  yPosition += 10;
+  doc.text(`Total Mood Entries: ${reportData.moodEntries.length}`, 20, yPosition);
+  yPosition += 20;
+  
+  // Wellness Assessments Section
+  if (reportData.assessments.length > 0) {
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Wellness Assessments', 20, yPosition);
+    yPosition += 15;
+    
+    // Table headers
+    const headers = ['Date', 'Sleep', 'Diet', 'Exercise', 'Work Life', 'Social', 'Overall'];
+    const colWidths = [30, 20, 20, 25, 25, 20, 20];
+    let xPosition = 20;
+    
+    // Draw header background
+    doc.setFillColor(...lightGray);
+    doc.rect(xPosition, yPosition - 8, colWidths.reduce((a, b) => a + b, 0), 8, 'F');
+    
+    // Draw headers
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...textColor);
+    headers.forEach((header, index) => {
+      doc.text(header, xPosition + 2, yPosition - 2);
+      xPosition += colWidths[index];
+    });
+    
+    yPosition += 5;
+    
+    // Draw data rows
+    doc.setFont('helvetica', 'normal');
+    reportData.assessments.forEach(assessment => {
+      if (yPosition > 250) {
+        doc.addPage();
+        yPosition = 20;
+      }
+      
+      xPosition = 20;
+      const rowData = [
+        assessment.date,
+        assessment.scores.sleep.toString(),
+        assessment.scores.diet.toString(),
+        assessment.scores.exercise.toString(),
+        assessment.scores.workLife.toString(),
+        assessment.scores.social.toString(),
+        assessment.overallScore.toString()
+      ];
+      
+      rowData.forEach((data, index) => {
+        doc.text(data, xPosition + 2, yPosition);
+        xPosition += colWidths[index];
+      });
+      
+      yPosition += 8;
+    });
+    
+    yPosition += 10;
+  }
+  
+  // Mood Entries Section
+  if (reportData.moodEntries.length > 0) {
+    if (yPosition > 200) {
+      doc.addPage();
+      yPosition = 20;
+    }
+    
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Mood Entries', 20, yPosition);
+    yPosition += 15;
+    
+    // Table headers
+    const moodHeaders = ['Date', 'Mood', 'Energy', 'Stress', 'Notes'];
+    const moodColWidths = [30, 25, 20, 20, 60];
+    let xPosition = 20;
+    
+    // Draw header background
+    doc.setFillColor(...lightGray);
+    doc.rect(xPosition, yPosition - 8, moodColWidths.reduce((a, b) => a + b, 0), 8, 'F');
+    
+    // Draw headers
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    moodHeaders.forEach((header, index) => {
+      doc.text(header, xPosition + 2, yPosition - 2);
+      xPosition += moodColWidths[index];
+    });
+    
+    yPosition += 5;
+    
+    // Draw data rows
+    doc.setFont('helvetica', 'normal');
+    reportData.moodEntries.forEach(entry => {
+      if (yPosition > 250) {
+        doc.addPage();
+        yPosition = 20;
+      }
+      
+      xPosition = 20;
+      const rowData = [
+        entry.date,
+        entry.mood,
+        entry.energy.toString(),
+        entry.stress.toString(),
+        entry.notes || '-'
+      ];
+      
+      rowData.forEach((data, index) => {
+        doc.text(data, xPosition + 2, yPosition);
+        xPosition += moodColWidths[index];
+      });
+      
+      yPosition += 8;
+    });
+  }
+  
+  // Save the PDF
+  doc.save(`wellness-report-${new Date().toISOString().split('T')[0]}.pdf`);
+  alert('PDF report downloaded successfully!');
+};
+
+const downloadCSV = () => {
+  const csvContent = generateCSVContent();
+  const blob = new Blob([csvContent], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `wellness-data-${new Date().toISOString().split('T')[0]}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  alert('CSV report downloaded successfully!');
+};
+
+const generateReportData = () => {
+  const currentDate = new Date().toISOString().split('T')[0];
+  const lastWeek = new Date();
+  lastWeek.setDate(lastWeek.getDate() - 7);
+  const lastWeekDate = lastWeek.toISOString().split('T')[0];
+  
+  // Get assessments from the last week
+  const recentAssessments = wellnessAssessments.value.filter(assessment => 
+    assessment.date >= lastWeekDate && assessment.date <= currentDate
+  );
+  
+  // Get mood entries from the last week
+  const recentMoodEntries = moodEntries.value.filter(entry => 
+    entry.date >= lastWeekDate && entry.date <= currentDate
+  );
+  
+  return {
+    dateRange: `${lastWeekDate} to ${currentDate}`,
+    assessments: recentAssessments,
+    moodEntries: recentMoodEntries,
+    averageWellnessScore: recentAssessments.length > 0 
+      ? (recentAssessments.reduce((sum, a) => sum + a.overallScore, 0) / recentAssessments.length).toFixed(1)
+      : 0
+  };
+};
+
+const generateCSVContent = () => {
+  const reportData = generateReportData();
+  
+  let csvContent = 'Weekly Wellness Report\n';
+  csvContent += `Period,${reportData.dateRange}\n`;
+  csvContent += `Generated,${new Date().toLocaleDateString()}\n`;
+  csvContent += `Average Wellness Score,${reportData.averageWellnessScore}\n\n`;
+  
+  csvContent += 'Wellness Assessments\n';
+  csvContent += 'Date,Sleep,Diet,Exercise,Work Life,Social,Overall Score\n';
+  
+  if (reportData.assessments.length > 0) {
+    reportData.assessments.forEach(assessment => {
+      csvContent += `${assessment.date},${assessment.scores.sleep},${assessment.scores.diet},${assessment.scores.exercise},${assessment.scores.workLife},${assessment.scores.social},${assessment.overallScore}\n`;
+    });
+  } else {
+    csvContent += 'No assessments recorded this week\n';
+  }
+  
+  csvContent += '\nMood Entries\n';
+  csvContent += 'Date,Mood,Energy,Stress,Notes\n';
+  
+  if (reportData.moodEntries.length > 0) {
+    reportData.moodEntries.forEach(entry => {
+      csvContent += `${entry.date},${entry.mood},${entry.energy},${entry.stress},"${entry.notes || ''}"\n`;
+    });
+  } else {
+    csvContent += 'No mood entries recorded this week\n';
+  }
+  
+  return csvContent;
+};
+
+// Load data on component mount
+onMounted(async () => {
+  try {
+    const [entries, assessments] = await Promise.all([
+      getMoodEntries(),
+      getWellnessAssessments()
+    ]);
+    moodEntries.value = entries;
+    wellnessAssessments.value = assessments;
+  } catch (error) {
+    console.error("Error loading wellness data:", error);
+  }
+});
+</script>
+
+<template>
+  <div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <RouterLink to="/" class="text-2xl font-bold text-slate-800 hover:text-blue-600 transition-colors">
+              WorkCompass
+            </RouterLink>
+          </div>
+          <nav class="space-x-4">
+            <RouterLink to="/dashboard" class="text-slate-600 hover:text-slate-800 font-medium">
+              Dashboard
+            </RouterLink>
+            <RouterLink to="/settings" class="text-slate-600 hover:text-slate-800 font-medium">
+              Settings
+            </RouterLink>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <!-- Page Header -->
+      <div class="mb-12 text-center">
+        <h1 class="text-4xl font-bold text-slate-900 mb-4">Wellness Monitoring</h1>
+        <p class="text-lg text-slate-600 max-w-3xl mx-auto">
+          Track your psychological well-being, monitor your mood patterns, and gain insights into your emotional health over time.
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-8 mb-12">
+        <!-- Mood Tracking Form -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-8">
+          <h2 class="text-2xl font-semibold text-slate-900 mb-6 flex items-center">
+            <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+            </svg>
+            Daily Mood Check-in
+          </h2>
+          
+          <form @submit.prevent="submitMoodEntry" class="space-y-6">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">How are you feeling?</label>
+              <div class="grid grid-cols-2 gap-3">
+                <label v-for="mood in moods" :key="mood" 
+                  class="flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all hover:border-blue-400"
+                  :class="selectedMood === mood.split(' ')[1] ? 'border-blue-600 bg-blue-50' : 'border-gray-200'">
+                  <input type="radio" v-model="selectedMood" :value="mood.split(' ')[1]" class="mr-2 hidden">
+                  <span class="text-2xl">{{ mood.split(' ')[0] }}</span>
+                  <span class="ml-2 text-sm text-slate-700 capitalize">{{ mood.split(' ')[1] }}</span>
+                </label>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">Energy Level: {{ moodEnergy }}/10</label>
+              <input type="range" v-model="moodEnergy" min="1" max="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">Stress Level: {{ moodStress }}/10</label>
+              <input type="range" v-model="moodStress" min="1" max="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">Notes (optional)</label>
+              <textarea v-model="moodNotes" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="How was your day?"></textarea>
+            </div>
+
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200">
+              Save Entry
+            </button>
+          </form>
+        </div>
+
+        <!-- Wellness Questionnaire -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-8">
+          <h2 class="text-2xl font-semibold text-slate-900 mb-6 flex items-center">
+            <svg class="w-6 h-6 mr-2 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+            </svg>
+            Weekly Wellness Assessment
+          </h2>
+
+          <div class="space-y-6 mb-60">
+            <div v-for="(value, key) in questionnaire" :key="key" class="space-y-2">
+              <div class="flex justify-between items-center">
+                <label class="text-sm font-medium text-slate-700 capitalize">{{ key.replace(/([A-Z])/g, ' $1').trim() }}</label>
+                <span class="text-sm font-semibold text-blue-600">{{ value }}/10</span>
+              </div>
+              <input type="range" v-model="questionnaire[key]" min="1" max="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+            </div>
+          </div>
+
+          <button @click="submitAssessment" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200">
+            Submit Assessment
+          </button>
+        </div>
+      </div>
+
+      <!-- Recent Entries -->
+      <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-8">
+        <h2 class="text-2xl font-semibold text-slate-900 mb-6">Recent Entries</h2>
+        
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead>
+              <tr class="border-b border-gray-200">
+                <th class="text-left py-3 px-4 text-sm font-semibold text-slate-700">Date</th>
+                <th class="text-left py-3 px-4 text-sm font-semibold text-slate-700">Mood</th>
+                <th class="text-left py-3 px-4 text-sm font-semibold text-slate-700">Energy</th>
+                <th class="text-left py-3 px-4 text-sm font-semibold text-slate-700">Stress</th>
+                <th class="text-left py-3 px-4 text-sm font-semibold text-slate-700">Notes</th>
+                <th class="text-left py-3 px-4 text-sm font-semibold text-slate-700">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(entry, index) in moodEntries" :key="index" class="border-b border-gray-100 hover:bg-gray-50">
+                <td class="py-3 px-4 text-sm text-slate-600">{{ entry.date }}</td>
+                <td class="py-3 px-4">
+                  <span :class="moodClass(entry.mood)" class="px-3 py-1 rounded-full text-sm font-medium capitalize">
+                    {{ entry.mood }}
+                  </span>
+                </td>
+                <td class="py-3 px-4">
+                  <div class="flex items-center">
+                    <div class="w-24 h-2 bg-gray-200 rounded-full mr-2">
+                      <div class="h-2 bg-green-500 rounded-full" :style="`width: ${entry.energy * 10}%`"></div>
+                    </div>
+                    <span class="text-sm text-slate-600">{{ entry.energy }}/10</span>
+                  </div>
+                </td>
+                <td class="py-3 px-4">
+                  <div class="flex items-center">
+                    <div class="w-24 h-2 bg-gray-200 rounded-full mr-2">
+                      <div class="h-2 bg-red-500 rounded-full" :style="`width: ${entry.stress * 10}%`"></div>
+                    </div>
+                    <span class="text-sm text-slate-600">{{ entry.stress }}/10</span>
+                  </div>
+                </td>
+                <td class="py-3 px-4 text-sm text-slate-600">{{ entry.notes || "-" }}</td>
+                <td class="py-3 px-4">
+                  <div class="flex space-x-2">
+                    <button @click="editEntry(entry)" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                      Edit
+                    </button>
+                    <button @click="deleteEntry(entry)" class="text-red-600 hover:text-red-800 text-sm font-medium">
+                      Delete
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Wellness Assessments History -->
+      <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-8">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-semibold text-slate-900 flex items-center">
+            <svg class="w-6 h-6 mr-2 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            Wellness Assessment History
+          </h2>
+          
+          <!-- Download Buttons -->
+          <div class="flex gap-3">
+            <button @click="downloadPDF" 
+                    class="flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              Download PDF
+            </button>
+            <button @click="downloadCSV" 
+                    class="flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              Download CSV
+            </button>
+          </div>
+        </div>
+        
+        <div v-if="wellnessAssessments.length === 0" class="text-center py-8 text-gray-500">
+          <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+          </svg>
+          <p>No assessments submitted yet. Complete your first wellness assessment above!</p>
+        </div>
+
+        <div v-else class="space-y-4">
+          <div v-for="assessment in paginatedAssessments" :key="assessment._id" 
+               class="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+            <div class="flex justify-between items-start mb-4">
+              <div class="flex items-center gap-3">
+                <div>
+                  <h3 class="text-lg font-semibold text-slate-900">{{ assessment.date }}</h3>
+                  <p class="text-sm text-gray-500">Weekly Assessment</p>
+                </div>
+                <div class="flex gap-2">
+                  <button @click="editAssessment(assessment)" 
+                          class="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                          title="Edit Assessment">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                  </button>
+                  <button @click="deleteAssessment(assessment)" 
+                          class="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                          title="Delete Assessment">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-2xl font-bold" :class="getScoreColor(assessment.overallScore)">
+                  {{ assessment.overallScore }}/10
+                </div>
+                <p class="text-sm text-gray-500">Overall Score</p>
+              </div>
+            </div>
+            
+            <!-- Assessment Content -->
+            <div v-if="editingAssessment && editingAssessment.id === assessment.id">
+              <!-- Edit Form -->
+              <div class="space-y-4 mb-4">
+                <div v-for="(value, key) in editAssessmentForm.scores" :key="key" class="space-y-2">
+                  <div class="flex justify-between items-center">
+                    <label class="text-sm font-medium text-slate-700 capitalize">{{ key.replace(/([A-Z])/g, ' $1').trim() }}</label>
+                    <span class="text-sm font-semibold text-blue-600">{{ value }}/10</span>
+                  </div>
+                  <input type="range" v-model="editAssessmentForm.scores[key]" min="1" max="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-2">Notes (Optional)</label>
+                  <textarea 
+                    v-model="editAssessmentForm.notes"
+                    rows="3" 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm"
+                    placeholder="Add any additional notes..."
+                  ></textarea>
+                </div>
+              </div>
+              
+              <div class="flex gap-2">
+                <button 
+                  @click="saveAssessmentEdit"
+                  class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded-lg transition-colors duration-200 text-sm"
+                >
+                  Save Changes
+                </button>
+                <button 
+                  @click="cancelAssessmentEdit"
+                  class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold px-4 py-2 rounded-lg transition-colors duration-200 text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+            
+            <!-- Display Mode -->
+            <div v-else>
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div v-for="(score, category) in assessment.scores" :key="category" 
+                     class="text-center p-3 bg-gray-50 rounded-lg">
+                  <div class="text-sm text-gray-600 capitalize mb-1">{{ category.replace(/([A-Z])/g, ' $1').trim() }}</div>
+                  <div class="text-lg font-semibold" :class="getScoreColor(score)">{{ score }}/10</div>
+                </div>
+              </div>
+              
+              <div v-if="assessment.notes" class="mt-4 p-3 bg-blue-50 rounded-lg">
+                <p class="text-sm text-blue-800">{{ assessment.notes }}</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Pagination Controls -->
+          <div v-if="totalPages > 1" class="flex justify-center items-center gap-2 mt-8">
+            <button 
+              @click="prevPage" 
+              :disabled="currentPage === 1"
+              class="px-3 py-2 bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 disabled:text-gray-400 text-gray-700 rounded-lg transition-colors duration-200"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+              </svg>
+            </button>
+            
+            <div class="flex gap-1">
+              <button 
+                v-for="page in totalPages" 
+                :key="page"
+                @click="goToPage(page)"
+                :class="currentPage === page ? 'bg-emerald-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'"
+                class="px-3 py-2 rounded-lg transition-colors duration-200"
+              >
+                {{ page }}
+              </button>
+            </div>
+            
+            <button 
+              @click="nextPage" 
+              :disabled="currentPage === totalPages"
+              class="px-3 py-2 bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 disabled:text-gray-400 text-gray-700 rounded-lg transition-colors duration-200"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </button>
+          </div>
+          
+          <!-- Pagination Info -->
+          <div v-if="totalPages > 1" class="text-center text-sm text-gray-500 mt-2">
+            Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to {{ Math.min(currentPage * itemsPerPage, wellnessAssessments.length) }} of {{ wellnessAssessments.length }} assessments
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit Modal -->
+      <div v-if="editingEntry" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+          <h3 class="text-xl font-semibold text-slate-900 mb-4">Edit Entry</h3>
+          
+          <form @submit.prevent="saveEdit" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">How were you feeling?</label>
+              <div class="grid grid-cols-2 gap-3">
+                <label v-for="mood in moods" :key="mood" 
+                  class="flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all hover:border-blue-400"
+                  :class="editForm.mood === mood.split(' ')[1] ? 'border-blue-600 bg-blue-50' : 'border-gray-200'">
+                  <input type="radio" v-model="editForm.mood" :value="mood.split(' ')[1]" class="mr-2 hidden">
+                  <span class="text-2xl">{{ mood.split(' ')[0] }}</span>
+                  <span class="ml-2 text-sm text-slate-700 capitalize">{{ mood.split(' ')[1] }}</span>
+                </label>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">Energy Level: {{ editForm.energy }}/10</label>
+              <input type="range" v-model="editForm.energy" min="1" max="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">Stress Level: {{ editForm.stress }}/10</label>
+              <input type="range" v-model="editForm.stress" min="1" max="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">Notes (optional)</label>
+              <textarea v-model="editForm.notes" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="How was your day?"></textarea>
+            </div>
+
+            <div class="flex gap-3">
+              <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200">
+                Save Changes
+              </button>
+              <button type="button" @click="cancelEdit" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-3 px-6 rounded-lg transition-colors duration-200">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
+    
+    <Footer />
+  </div>
+</template>
+

@@ -13,6 +13,10 @@ import Candidates from "../views/Candidates.vue";
 import CandidateDetails from "../views/CandidateDetails.vue";
 import Settings from "../views/Settings.vue";
 import Calendar from "../views/Calendar.vue";
+import Feedback from "../views/Feedback.vue";
+import WellnessMonitoring from "../views/WellnessMonitoring.vue";
+import WellnessResources from "../views/WellnessResources.vue";
+import DiscussionForum from "../views/DiscussionForum.vue";
 // OAuthCallback not needed when only Google (GSI) is used
 
 const routes = [
@@ -30,6 +34,10 @@ const routes = [
     { path: "/candidates/:id", name: "CandidateDetails", component: CandidateDetails },
     { path: "/settings", name: "Settings", component: Settings },
     { path: "/calendar", name: "Calendar", component: Calendar },
+    { path: "/feedback", name: "Feedback", component: Feedback },
+    { path: "/wellness/monitoring", name: "WellnessMonitoring", component: WellnessMonitoring },
+    { path: "/wellness/resources", name: "WellnessResources", component: WellnessResources },
+    { path: "/community/forum", name: "DiscussionForum", component: DiscussionForum },
     
   ];
 

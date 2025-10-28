@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://workcompass-aubna8bcgub5f3bt.westeurope-01.azurewebsites.net";
 
 // Helper function to get auth headers
 const getAuthHeaders = (token) => ({

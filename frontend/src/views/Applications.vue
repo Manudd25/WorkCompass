@@ -3,6 +3,7 @@ import { onMounted, ref, computed } from "vue";
 import { RouterLink, useRouter } from "vue-router";
 import { useUserStore } from "../store/userStore.js";
 import ApplicationList from "../components/ApplicationList.vue";
+import Footer from "../components/Footer.vue";
 import { getApplications } from "../../services/api.js";
 import { exportToPDF, exportToCSV, formatFilename } from "../utils/exportUtils.js";
 
@@ -461,9 +462,7 @@ onMounted(fetchApplications);
     </main>
 
     <!-- Footer -->
-    <footer class="bg-white text-center py-4 text-gray-500 text-sm">
-      © 2025 WorkCompass — Made with ❤️ for ambitious job seekers and recruiters
-    </footer>
+    <Footer />
   </div>
 </template>
 

@@ -9,6 +9,7 @@ import CandidateForm from "../components/CandidateForm.vue";
 import CandidateApplicationCard from "../components/CandidateApplicationCard.vue";
 import DashboardCharts from "../components/DashboardCharts.vue";
 import RecruiterCharts from "../components/RecruiterCharts.vue";
+import AIAgent from "../components/AIAgent.vue";
 import { getApplications, updateApplication as apiUpdateApplication, deleteApplication as apiDeleteApplication, createCandidate as apiCreateCandidate } from "../../services/api.js";
 import { exportToPDF, exportToCSV, formatFilename } from "../utils/exportUtils.js";
 
@@ -215,6 +216,11 @@ const createCandidateHandler = async (formData) => {
         <!-- Main content -->
         <main class="flex-1 px-4 sm:px-6 py-6 sm:py-8 max-w-6xl w-full mx-auto">
           <h2 class="text-2xl sm:text-3xl font-extrabold mb-4 sm:mb-6">Dashboard</h2>
+
+          <!-- AI Agent - Floating Widget -->
+          <div class="fixed bottom-6 right-6 z-50">
+            <AIAgent />
+          </div>
 
           <!-- Professional Charts (candidates only) -->
           <section v-if="userStore.user?.role !== 'recruiter'" class="mb-6 sm:mb-8">
