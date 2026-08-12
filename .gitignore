@@ -140,3 +140,9 @@ vite.config.ts.timestamp-*
 
 # Local Netlify folder
 .netlify
+
+# Deploy archives (never commit — may contain secrets / node_modules)
+deploy.zip
+*.zip
+!frontend/public/**/*.zip
+
