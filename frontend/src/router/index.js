@@ -7,7 +7,6 @@ import ResetPassword from "../views/ResetPassword.vue";
 import Dashboard from "../views/Dashboard.vue";
 import LandingPage from "../views/LandingPage.vue";
 import Applications from "../views/Applications.vue";
-import NewApplication from "../views/NewApplication.vue";
 import ApplicationDetails from "../views/ApplicationDetails.vue";
 import Rejections from "../views/Rejections.vue";
 import Candidates from "../views/Candidates.vue";
@@ -29,7 +28,7 @@ const routes = [
   { path: "/reset-password", name: "ResetPassword", component: ResetPassword },
   { path: "/dashboard", name: "Dashboard", component: Dashboard, meta: { requiresAuth: true } },
   { path: "/applications", name: "Applications", component: Applications, meta: { requiresAuth: true } },
-  { path: "/applications/new", name: "NewApplication", component: NewApplication, meta: { requiresAuth: true } },
+  { path: "/applications/new", redirect: { path: "/applications", query: { new: "1" } } },
   { path: "/applications/:id", name: "ApplicationDetails", component: ApplicationDetails, meta: { requiresAuth: true } },
   { path: "/rejections", name: "Rejections", component: Rejections, meta: { requiresAuth: true } },
   { path: "/candidates", name: "Candidates", component: Candidates, meta: { requiresAuth: true } },

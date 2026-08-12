@@ -72,6 +72,26 @@ const editForm = ref({
 
 const moods = ["😊 happy", "😌 calm", "😐 neutral", "😰 anxious", "😴 tired", "😃 excited", "😔 sad", "😤 frustrated"];
 
+const SCORE_KEYS = ["sleep", "diet", "exercise", "workLife", "social", "overall"];
+
+const toScoreNumber = (value) => {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+};
+
+const computeOverallScore = (scores = {}) => {
+  const values = SCORE_KEYS.map((key) => toScoreNumber(scores[key])).filter((n) => n > 0);
+  if (!values.length) return 0;
+  return Math.round((values.reduce((sum, n) => sum + n, 0) / values.length) * 10) / 10;
+};
+
+/** Prefer a sane 1–10 average; recompute if stored overallScore was corrupted (string concat bug). */
+const displayOverallScore = (assessment) => {
+  const stored = toScoreNumber(assessment?.overallScore);
+  if (stored >= 1 && stored <= 10) return stored;
+  return computeOverallScore(assessment?.scores);
+};
+
 const submitMoodEntry = async () => {
   if (!selectedMood.value) {
     alert("Please select your mood");
@@ -175,14 +195,20 @@ const moodClass = (mood) => {
 };
 
 const submitAssessment = async () => {
-  const scores = Object.values(questionnaire.value);
-  const overallScore = scores.reduce((sum, score) => sum + score, 0) / scores.length;
+  const overallScore = computeOverallScore(questionnaire.value);
   
   try {
     const newAssessment = await createWellnessAssessment({
       date: new Date().toISOString().split('T')[0],
-      scores: { ...questionnaire.value },
-      overallScore: Math.round(overallScore * 10) / 10,
+      scores: {
+        sleep: toScoreNumber(questionnaire.value.sleep),
+        diet: toScoreNumber(questionnaire.value.diet),
+        exercise: toScoreNumber(questionnaire.value.exercise),
+        workLife: toScoreNumber(questionnaire.value.workLife),
+        social: toScoreNumber(questionnaire.value.social),
+        overall: toScoreNumber(questionnaire.value.overall),
+      },
+      overallScore,
       notes: ""
     });
     
@@ -215,14 +241,20 @@ const editAssessment = (assessment) => {
 const saveAssessmentEdit = async () => {
   if (!editingAssessment.value) return;
   
-  const scores = Object.values(editAssessmentForm.value.scores);
-  const overallScore = scores.reduce((sum, score) => sum + score, 0) / scores.length;
+  const overallScore = computeOverallScore(editAssessmentForm.value.scores);
   
   try {
     const updatedAssessment = await updateWellnessAssessment(editingAssessment.value._id, {
-      date: new Date().toISOString().split('T')[0],
-      scores: { ...editAssessmentForm.value.scores },
-      overallScore: Math.round(overallScore * 10) / 10,
+      date: editingAssessment.value.date || new Date().toISOString().split('T')[0],
+      scores: {
+        sleep: toScoreNumber(editAssessmentForm.value.scores.sleep),
+        diet: toScoreNumber(editAssessmentForm.value.scores.diet),
+        exercise: toScoreNumber(editAssessmentForm.value.scores.exercise),
+        workLife: toScoreNumber(editAssessmentForm.value.scores.workLife),
+        social: toScoreNumber(editAssessmentForm.value.scores.social),
+        overall: toScoreNumber(editAssessmentForm.value.scores.overall),
+      },
+      overallScore,
       notes: editAssessmentForm.value.notes
     });
     
@@ -379,7 +411,7 @@ const downloadPDF = () => {
         assessment.scores.exercise.toString(),
         assessment.scores.workLife.toString(),
         assessment.scores.social.toString(),
-        assessment.overallScore.toString()
+        displayOverallScore(assessment).toFixed(1)
       ];
       
       rowData.forEach((data, index) => {
@@ -483,8 +515,8 @@ const generateReportData = () => {
     assessments: recentAssessments,
     moodEntries: recentMoodEntries,
     averageWellnessScore: recentAssessments.length > 0 
-      ? (recentAssessments.reduce((sum, a) => sum + a.overallScore, 0) / recentAssessments.length).toFixed(1)
-      : 0
+      ? (recentAssessments.reduce((sum, a) => sum + displayOverallScore(a), 0) / recentAssessments.length).toFixed(1)
+      : "0.0",
   };
 };
 
@@ -501,7 +533,7 @@ const generateCSVContent = () => {
   
   if (reportData.assessments.length > 0) {
     reportData.assessments.forEach(assessment => {
-      csvContent += `${assessment.date},${assessment.scores.sleep},${assessment.scores.diet},${assessment.scores.exercise},${assessment.scores.workLife},${assessment.scores.social},${assessment.overallScore}\n`;
+      csvContent += `${assessment.date},${assessment.scores.sleep},${assessment.scores.diet},${assessment.scores.exercise},${assessment.scores.workLife},${assessment.scores.social},${displayOverallScore(assessment).toFixed(1)}\n`;
     });
   } else {
     csvContent += 'No assessments recorded this week\n';
@@ -566,12 +598,12 @@ onMounted(async () => {
 
             <div>
               <label class="block text-sm font-medium text-slate-700 mb-2 dark:text-slate-300">Energy Level: {{ moodEnergy }}/10</label>
-              <input type="range" v-model="moodEnergy" min="1" max="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-600">
+              <input type="range" v-model.number="moodEnergy" min="1" max="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-600">
             </div>
 
             <div>
               <label class="block text-sm font-medium text-slate-700 mb-2 dark:text-slate-300">Stress Level: {{ moodStress }}/10</label>
-              <input type="range" v-model="moodStress" min="1" max="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-600">
+              <input type="range" v-model.number="moodStress" min="1" max="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-600">
             </div>
 
             <div>
@@ -605,7 +637,7 @@ onMounted(async () => {
                 <label class="text-sm font-medium text-slate-700 capitalize dark:text-slate-300">{{ key.replace(/([A-Z])/g, ' $1').trim() }}</label>
                 <span class="text-sm font-semibold text-blue-600 dark:text-blue-400">{{ value }}/10</span>
               </div>
-              <input type="range" v-model="questionnaire[key]" min="1" max="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-600">
+              <input type="range" v-model.number="questionnaire[key]" min="1" max="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-600">
             </div>
           </div>
 
@@ -743,10 +775,11 @@ onMounted(async () => {
                 </div>
               </div>
               <div class="text-right">
-                <div class="text-2xl font-bold" :class="getScoreColor(assessment.overallScore)">
-                  {{ assessment.overallScore }}/10
+                <div class="text-2xl font-bold" :class="getScoreColor(displayOverallScore(assessment))">
+                  {{ displayOverallScore(assessment).toFixed(1) }}
+                  <span class="text-base font-medium text-slate-500 dark:text-slate-400">/ 10</span>
                 </div>
-                <p class="text-sm text-gray-500 dark:text-slate-400">Overall Score</p>
+                <p class="text-sm text-gray-500 dark:text-slate-400">Average score</p>
               </div>
             </div>
             
@@ -757,7 +790,7 @@ onMounted(async () => {
                     <label class="text-sm font-medium text-slate-700 capitalize dark:text-slate-300">{{ key.replace(/([A-Z])/g, ' $1').trim() }}</label>
                     <span class="text-sm font-semibold text-blue-600 dark:text-blue-400">{{ value }}/10</span>
                   </div>
-                  <input type="range" v-model="editAssessmentForm.scores[key]" min="1" max="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-600">
+                  <input type="range" v-model.number="editAssessmentForm.scores[key]" min="1" max="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-600">
                 </div>
                 
                 <div>
@@ -863,12 +896,12 @@ onMounted(async () => {
 
             <div>
               <label class="block text-sm font-medium text-slate-700 mb-2 dark:text-slate-300">Energy Level: {{ editForm.energy }}/10</label>
-              <input type="range" v-model="editForm.energy" min="1" max="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-600">
+              <input type="range" v-model.number="editForm.energy" min="1" max="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-600">
             </div>
 
             <div>
               <label class="block text-sm font-medium text-slate-700 mb-2 dark:text-slate-300">Stress Level: {{ editForm.stress }}/10</label>
-              <input type="range" v-model="editForm.stress" min="1" max="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-600">
+              <input type="range" v-model.number="editForm.stress" min="1" max="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-600">
             </div>
 
             <div>

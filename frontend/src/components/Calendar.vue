@@ -1,7 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
-import { useUserStore } from "../store/userStore.js";
-import { getApplications } from "../../services/api.js";
+import { ref, computed } from "vue";
 
 const props = defineProps({
   applications: {
@@ -10,12 +8,10 @@ const props = defineProps({
   }
 });
 
-const userStore = useUserStore();
-
 // Calendar state
 const currentDate = ref(new Date());
 const viewMode = ref('month'); // 'month', 'week', 'day'
-const selectedDate = ref(null);
+const selectedDate = ref(new Date());
 const showInterviewModal = ref(false);
 const selectedApplication = ref(null);
 
@@ -29,20 +25,44 @@ const interviewType = ref('video'); // 'video', 'phone', 'in-person'
 // Computed properties
 const currentMonth = computed(() => currentDate.value.getMonth());
 const currentYear = computed(() => currentDate.value.getFullYear());
-const currentDay = computed(() => currentDate.value.getDate());
 
-// Get applications with interview status
-const interviewApplications = computed(() => {
-  return props.applications.filter(app => app.status === 'Interview');
-});
+const toLocalDateKey = (value) => {
+  if (!value) return "";
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value)) {
+    return value.slice(0, 10);
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+};
 
+const getInterviewDate = (app) => {
+  const key = toLocalDateKey(app?.interviewDate);
+  if (!key) return null;
+  const [y, m, d] = key.split("-").map(Number);
+  return new Date(y, m - 1, d);
+};
+
+const dateKey = (day) => toLocalDateKey(day);
+
+// Show any application that has an interview date
+const interviewApplications = computed(() =>
+  props.applications.filter((app) => Boolean(getInterviewDate(app)))
+);
+
+const applicationsOnDate = (day) => {
+  const key = dateKey(day);
+  return interviewApplications.value.filter((app) => toLocalDateKey(app.interviewDate) === key);
+};
 // Calendar days for current month
 const calendarDays = computed(() => {
   const year = currentYear.value;
   const month = currentMonth.value;
   
   const firstDay = new Date(year, month, 1);
-  const lastDay = new Date(year, month + 1, 0);
   const startDate = new Date(firstDay);
   startDate.setDate(startDate.getDate() - firstDay.getDay());
   
@@ -50,16 +70,11 @@ const calendarDays = computed(() => {
   const current = new Date(startDate);
   
   for (let i = 0; i < 42; i++) {
-    const dayApplications = interviewApplications.value.filter(app => {
-      const appDate = new Date(app.date);
-      return appDate.toDateString() === current.toDateString();
-    });
-    
     days.push({
       date: new Date(current),
       isCurrentMonth: current.getMonth() === month,
       isToday: current.toDateString() === new Date().toDateString(),
-      applications: dayApplications
+      applications: applicationsOnDate(current)
     });
     
     current.setDate(current.getDate() + 1);
@@ -78,14 +93,9 @@ const weekDays = computed(() => {
     const day = new Date(startOfWeek);
     day.setDate(day.getDate() + i);
     
-    const dayApplications = interviewApplications.value.filter(app => {
-      const appDate = new Date(app.date);
-      return appDate.toDateString() === day.toDateString();
-    });
-    
     days.push({
       date: new Date(day),
-      applications: dayApplications
+      applications: applicationsOnDate(day)
     });
   }
   
@@ -94,12 +104,8 @@ const weekDays = computed(() => {
 
 // Day view applications
 const dayApplications = computed(() => {
-  if (!selectedDate.value) return [];
-  
-  return interviewApplications.value.filter(app => {
-    const appDate = new Date(app.date);
-    return appDate.toDateString() === selectedDate.value.toDateString();
-  });
+  const day = selectedDate.value || currentDate.value;
+  return applicationsOnDate(day);
 });
 
 // Methods
@@ -119,22 +125,24 @@ const navigateDay = (direction) => {
   const newDate = new Date(currentDate.value);
   newDate.setDate(newDate.getDate() + direction);
   currentDate.value = newDate;
+  selectedDate.value = newDate;
 };
 
 const goToToday = () => {
-  currentDate.value = new Date();
+  const today = new Date();
+  currentDate.value = today;
+  selectedDate.value = today;
 };
 
 const selectDate = (date) => {
   selectedDate.value = date;
-  if (viewMode.value === 'day') {
-    // Day view logic
-  }
+  currentDate.value = date;
 };
 
 const openInterviewModal = (application) => {
   selectedApplication.value = application;
-  interviewDate.value = application.date ? new Date(application.date).toISOString().slice(0, 10) : '';
+  interviewDate.value = toLocalDateKey(application.interviewDate)
+    || (selectedDate.value ? dateKey(selectedDate.value) : dateKey(new Date()));
   interviewTime.value = application.interviewTime || '';
   interviewLocation.value = application.interviewLocation || '';
   interviewType.value = application.interviewType || 'video';
@@ -386,7 +394,7 @@ const getStatusColor = (status) => {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
           </svg>
           <p class="text-lg font-medium mb-2">No interviews scheduled</p>
-          <p class="text-sm">Mark applications as "Interview" to see them here</p>
+          <p class="text-sm">Set an interview date on an application to see it here</p>
         </div>
       </div>
     </div>

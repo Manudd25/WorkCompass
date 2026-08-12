@@ -10,6 +10,12 @@ export default defineConfig({
     vue(),
     vueDevTools(),
   ],
+  // Keep a stable origin for Google OAuth (Authorized JavaScript origins).
+  // If 5173 is busy, Vite will fail instead of silently switching ports.
+  server: {
+    port: 5173,
+    strictPort: true,
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))

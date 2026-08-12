@@ -9,10 +9,12 @@ import MetricCard from "../components/MetricCard.vue";
 import StatusBadge from "../components/StatusBadge.vue";
 import EmptyState from "../components/EmptyState.vue";
 import SidebarShell from "../components/SidebarShell.vue";
+import ApplicationCreateModal from "../components/ApplicationCreateModal.vue";
 import { getApplications } from "../../services/api.js";
 
 const router = useRouter();
 const userStore = useUserStore();
+const showCreateModal = ref(false);
 
 const applications = ref([]);
 const isLoading = ref(false);
@@ -127,13 +129,25 @@ const upcomingActions = computed(() =>
               </div>
             </article>
           </div>
-          <EmptyState v-else title="No applications yet" message="Create your first application to start the pipeline." cta-text="Add application" cta-to="/applications/new" />
+          <EmptyState
+            v-else
+            title="No applications yet"
+            message="Create your first application to start the pipeline."
+            cta-text="Add application"
+            @cta="showCreateModal = true"
+          />
         </section>
       </div>
 
       <p v-if="isLoading" class="mt-4 text-sm text-slate-500 dark:text-slate-400">Loading dashboard data...</p>
       <p v-if="errorMessage" class="mt-4 text-sm text-red-600 dark:text-red-400">{{ errorMessage }}</p>
     </SidebarShell>
+
+    <ApplicationCreateModal
+      :open="showCreateModal"
+      @close="showCreateModal = false"
+      @created="fetchApplications"
+    />
 
     <Footer />
     <div class="fixed bottom-6 right-6 z-50"><AIAgent /></div>

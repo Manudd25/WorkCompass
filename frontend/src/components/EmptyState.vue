@@ -5,6 +5,8 @@ defineProps({
   ctaText: { type: String, default: "" },
   ctaTo: { type: String, default: "" },
 });
+
+defineEmits(["cta"]);
 </script>
 
 <template>
@@ -18,5 +20,13 @@ defineProps({
     >
       {{ ctaText }}
     </RouterLink>
+    <button
+      v-else-if="ctaText"
+      type="button"
+      class="mt-5 inline-flex rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800"
+      @click="$emit('cta')"
+    >
+      {{ ctaText }}
+    </button>
   </div>
 </template>

@@ -319,7 +319,7 @@ onMounted(fetchApplications);
           </svg>
           <p class="text-xl font-medium mb-2">No archived applications yet!</p>
           <p class="text-sm mb-4">This is great news - you haven't had any applications archived yet.</p>
-          <RouterLink to="/applications/new" class="px-6 py-3 text-sm font-medium bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-200 flex items-center mx-auto">
+          <RouterLink to="/applications?new=1" class="px-6 py-3 text-sm font-medium bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-200 flex items-center mx-auto">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
             </svg>

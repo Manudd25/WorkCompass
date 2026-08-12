@@ -1,17 +1,41 @@
 <script setup>
-import { onMounted, ref, computed } from "vue";
-import { RouterLink, useRouter } from "vue-router";
+import { onMounted, onBeforeUnmount, ref, computed, watch } from "vue";
+import { RouterLink, useRoute, useRouter } from "vue-router";
 import { useUserStore } from "../store/userStore.js";
 import Footer from "../components/Footer.vue";
 import SectionHeader from "../components/SectionHeader.vue";
 import EmptyState from "../components/EmptyState.vue";
 import StatusBadge from "../components/StatusBadge.vue";
 import SidebarShell from "../components/SidebarShell.vue";
+import ApplicationCreateModal from "../components/ApplicationCreateModal.vue";
 import { getApplications } from "../../services/api.js";
 import { exportToPDF, exportToCSV, formatFilename } from "../utils/exportUtils.js";
 
 const router = useRouter();
+const route = useRoute();
 const userStore = useUserStore();
+const showCreateModal = ref(false);
+
+const openCreateModal = () => {
+  showCreateModal.value = true;
+};
+
+const closeCreateModal = () => {
+  showCreateModal.value = false;
+  if (route.query.new !== undefined) {
+    const nextQuery = { ...route.query };
+    delete nextQuery.new;
+    router.replace({ path: "/applications", query: nextQuery });
+  }
+};
+
+watch(
+  () => route.query.new,
+  (value) => {
+    if (value !== undefined) showCreateModal.value = true;
+  },
+  { immediate: true }
+);
 const navItems = [
   { label: "Dashboard", to: "/dashboard" },
   { label: "Applications", to: "/applications" },
@@ -164,7 +188,13 @@ const fetchApplications = async () => {
   }
 };
 
-onMounted(fetchApplications);
+onMounted(() => {
+  fetchApplications();
+  window.addEventListener("applications-updated", fetchApplications);
+});
+onBeforeUnmount(() => {
+  window.removeEventListener("applications-updated", fetchApplications);
+});
 </script>
 
 <template>
@@ -198,12 +228,16 @@ onMounted(fetchApplications);
               </svg>
               CSV
             </button>
-            <RouterLink to="/applications/new" class="px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all duration-200">
+            <button
+              type="button"
+              class="px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all duration-200"
+              @click="openCreateModal"
+            >
               <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
               </svg>
               Add Application
-            </RouterLink>
+            </button>
           </div>
         </div>
       </div>
@@ -329,14 +363,14 @@ onMounted(fetchApplications);
           title="No applications yet"
           message="Start tracking your job applications by adding your first one."
           cta-text="Add your first application"
-          cta-to="/applications/new"
+          @cta="openCreateModal"
         />
         <EmptyState
           v-else-if="filteredApplications.length === 0"
           title="No applications found"
           message="Try adjusting filters or add a new application."
           cta-text="Add application"
-          cta-to="/applications/new"
+          @cta="openCreateModal"
         />
         <div v-else class="divide-y divide-gray-100 dark:divide-slate-700">
           <div v-for="app in paginatedApplications" :key="app._id" class="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -418,6 +452,12 @@ onMounted(fetchApplications);
         </div>
       </div>
     </SidebarShell>
+
+    <ApplicationCreateModal
+      :open="showCreateModal"
+      @close="closeCreateModal"
+      @created="fetchApplications"
+    />
 
     <Footer />
   </div>

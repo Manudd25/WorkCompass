@@ -1,5 +1,7 @@
 <script setup>
-const props = defineProps({
+import StatusBadge from "./StatusBadge.vue";
+
+defineProps({
   application: {
     type: Object,
     required: true,
@@ -9,32 +11,25 @@ const props = defineProps({
 </script>
 
 <template>
-  <div class="bg-white rounded-xl shadow p-6 border border-gray-100">
-    <div class="flex items-start justify-between">
-      <div>
-        <h3 class="text-xl font-semibold">
-          {{ props.application?.role }}
-          <span class="text-gray-500">@ {{ props.application?.company }}</span>
+  <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:shadow-slate-900/30">
+    <div class="flex items-start justify-between gap-3">
+      <div class="min-w-0">
+        <h3 class="text-xl font-semibold text-slate-900 dark:text-slate-100">
+          {{ application?.role }}
+          <span class="text-slate-500 dark:text-slate-400">@ {{ application?.company }}</span>
         </h3>
-        <p class="text-sm text-gray-500 mt-1">{{ new Date(props.application?.date).toLocaleDateString() }}</p>
+        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          {{ application?.date ? new Date(application.date).toLocaleDateString() : "" }}
+        </p>
       </div>
-      <span
-        class="px-2.5 py-1 rounded-full text-xs font-semibold"
-        :class="{
-          'bg-blue-100 text-blue-700': props.application?.status === 'Applied',
-          'bg-yellow-100 text-yellow-700': props.application?.status === 'Interview',
-          'bg-green-100 text-green-700': props.application?.status === 'Offer',
-          'bg-red-100 text-red-700': props.application?.status === 'Rejected',
-        }"
-      >
-        {{ props.application?.status }}
-      </span>
+      <StatusBadge :status="application?.status" />
     </div>
 
-    <div class="mt-4 text-gray-700 whitespace-pre-line break-words break-all" v-if="props.application?.notes">
-      {{ props.application.notes }}
+    <div
+      v-if="application?.notes"
+      class="mt-4 whitespace-pre-line break-words text-slate-700 dark:text-slate-300"
+    >
+      {{ application.notes }}
     </div>
   </div>
 </template>
-
-

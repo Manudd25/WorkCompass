@@ -1,9 +1,8 @@
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { useUserStore } from "../store/userStore.js";
 import { getApplications, updateApplication } from "../../services/api.js";
-import Footer from "../components/Footer.vue";
 import SidebarShell from "../components/SidebarShell.vue";
 import SectionHeader from "../components/SectionHeader.vue";
 import Calendar from "../components/Calendar.vue";
@@ -50,14 +49,21 @@ const fetchApplications = async () => {
 const updateInterview = async (interviewData) => {
   try {
     const token = userStore.token;
-    await updateApplication(interviewData.id, {
+    const existing = applications.value.find((app) => app._id === interviewData.id);
+    const payload = {
       interviewTime: interviewData.interviewTime,
       interviewDate: interviewData.interviewDate,
       interviewLocation: interviewData.interviewLocation,
       interviewType: interviewData.interviewType,
-      interviewNotes: interviewData.interviewNotes
-    }, token);
-    
+      interviewNotes: interviewData.interviewNotes,
+    };
+
+    if (interviewData.interviewDate && existing?.status === "Applied") {
+      payload.status = "Interview";
+    }
+
+    await updateApplication(interviewData.id, payload, token);
+    window.dispatchEvent(new CustomEvent("applications-updated"));
     await fetchApplications();
   } catch (error) {
     console.error("Failed to update interview:", error);
@@ -65,7 +71,14 @@ const updateInterview = async (interviewData) => {
   }
 };
 
-onMounted(fetchApplications);
+onMounted(() => {
+  fetchApplications();
+  window.addEventListener("applications-updated", fetchApplications);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("applications-updated", fetchApplications);
+});
 </script>
 
 <template>
