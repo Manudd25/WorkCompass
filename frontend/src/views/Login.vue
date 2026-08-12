@@ -3,7 +3,7 @@ import { ref, onMounted } from "vue";
 import { RouterLink, useRouter } from "vue-router";
 import { useUserStore } from "../store/userStore.js";
 import Footer from "../components/Footer.vue";
-import { login, googleAuth } from "../../services/api.js";
+import { login, googleAuth, getGoogleClientId } from "../../services/api.js";
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -29,7 +29,6 @@ const handleLogin = async () => {
     });
     userStore.setUser(res.user, res.token);
     
-    // Redirect to intended page or dashboard
     const redirectTo = router.currentRoute.value.query.redirect || "/dashboard";
     router.push(redirectTo);
   } catch (error) {
@@ -40,22 +39,31 @@ const handleLogin = async () => {
 };
 
 const initGoogle = () => {
-  // Load Google script 
-  if (!document.getElementById("google-gsi-script")) {
-    const s = document.createElement("script");
-    s.src = "https://accounts.google.com/gsi/client";
-    s.async = true;
-    s.defer = true;
-    s.id = "google-gsi-script";
-    s.onload = () => setupGoogleButton();
-    document.head.appendChild(s);
-  } else {
-    setupGoogleButton();
-  }
+  getGoogleClientId()
+    .then(({ clientId }) => {
+      if (!clientId) {
+        errorMessage.value = "Google auth not configured.";
+        return;
+      }
+
+      if (!document.getElementById("google-gsi-script")) {
+        const s = document.createElement("script");
+        s.src = "https://accounts.google.com/gsi/client";
+        s.async = true;
+        s.defer = true;
+        s.id = "google-gsi-script";
+        s.onload = () => setupGoogleButton(clientId);
+        document.head.appendChild(s);
+      } else {
+        setupGoogleButton(clientId);
+      }
+    })
+    .catch((err) => {
+      errorMessage.value = err?.message || "Failed to initialize Google sign-in.";
+    });
 };
 
-const setupGoogleButton = () => {
-  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+const setupGoogleButton = (clientId) => {
   if (!clientId || !window.google || !googleButtonEl.value) return;
 
   window.google.accounts.id.initialize({
@@ -82,7 +90,6 @@ const handleGoogleCredentialResponse = async (response) => {
     const res = await googleAuth(idToken);
     userStore.setUser(res.user, res.token);
     
-    // Redirect to intended page or dashboard
     const redirectTo = router.currentRoute.value.query.redirect || "/dashboard";
     router.push(redirectTo);
   } catch (err) {
@@ -90,43 +97,36 @@ const handleGoogleCredentialResponse = async (response) => {
   }
 };
 
-  
-
 onMounted(() => {
   initGoogle();
 });
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-gradient-to-br from-gray-100 to-blue-100 text-gray-800 font-sans">
+  <div class="min-h-screen flex flex-col bg-gradient-to-br from-gray-100 to-blue-100 text-gray-800 font-sans dark:from-slate-900 dark:to-slate-900 dark:text-slate-100">
     <!-- Header -->
-    <header class="flex justify-between items-center px-8 py-4 bg-white shadow-md">
-      <h1 @click="router.push('/')" class="text-2xl font-bold text-blue-600 cursor-pointer">WorkCompass</h1>
+    <header class="flex justify-between items-center px-8 py-4 bg-white shadow-md dark:bg-slate-800 dark:shadow-slate-900/30">
+      <h1 @click="router.push('/')" class="text-2xl font-bold text-blue-600 cursor-pointer dark:text-blue-400">WorkCompass</h1>
       <nav class="space-x-6">
         <RouterLink to="/login" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Login</RouterLink>
-        <RouterLink
-          to="/signup"
-          class="text-gray-700 hover:text-blue-600"
-        >
-          Sign Up
-        </RouterLink>
+        <RouterLink to="/signup" class="text-gray-700 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400">Sign Up</RouterLink>
       </nav>
     </header>
 
     <!-- Main content -->
     <main class="flex-1 flex items-center justify-center px-6 py-12">
-      <div class="w-full max-w-md bg-white shadow-lg rounded-xl p-8">
-        <h2 class="text-2xl font-extrabold text-center mb-6">Welcome back</h2>
-        <p class="text-sm text-gray-600 text-center mb-8">Log in to access your dashboard.</p>
+      <div class="w-full max-w-md bg-white shadow-lg rounded-xl p-8 dark:bg-slate-800 dark:shadow-slate-900/30">
+        <h2 class="text-2xl font-extrabold text-center mb-6 dark:text-slate-100">Welcome back</h2>
+        <p class="text-sm text-gray-600 text-center mb-8 dark:text-slate-400">Log in to access your dashboard.</p>
 
         <form @submit.prevent="handleLogin" class="space-y-5">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1" for="email">Email</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-300" for="email">Email</label>
             <input
               id="email"
               type="email"
               v-model="email"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-400"
               placeholder="jane@example.com"
               autocomplete="email"
               required
@@ -135,8 +135,8 @@ onMounted(() => {
 
           <div>
             <div class="flex justify-between items-center mb-1">
-              <label class="block text-sm font-medium text-gray-700" for="password">Password</label>
-              <RouterLink to="/forgot-password" class="text-sm text-blue-600 hover:underline">
+              <label class="block text-sm font-medium text-gray-700 dark:text-slate-300" for="password">Password</label>
+              <RouterLink to="/forgot-password" class="text-sm text-blue-600 hover:underline dark:text-blue-400">
                 Forgot password?
               </RouterLink>
             </div>
@@ -145,7 +145,7 @@ onMounted(() => {
                 id="password"
                 :type="showPassword ? 'text' : 'password'"
                 v-model="password"
-                class="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-400"
                 placeholder="••••••••"
                 autocomplete="current-password"
                 required
@@ -153,7 +153,7 @@ onMounted(() => {
               <button
                 type="button"
                 @click="showPassword = !showPassword"
-                class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300"
               >
                 <svg v-if="!showPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -174,31 +174,27 @@ onMounted(() => {
             {{ isSubmitting ? "Logging in..." : "Login" }}
           </button>
 
-          <p v-if="errorMessage" class="text-red-600 text-sm text-center">{{ errorMessage }}</p>
+          <p v-if="errorMessage" class="text-red-600 text-sm text-center dark:text-red-400">{{ errorMessage }}</p>
 
-          <p class="text-sm text-gray-600 text-center">
+          <p class="text-sm text-gray-600 text-center dark:text-slate-400">
             New here?
-            <RouterLink to="/signup" class="text-blue-600 hover:underline">Create an account</RouterLink>
+            <RouterLink to="/signup" class="text-blue-600 hover:underline dark:text-blue-400">Create an account</RouterLink>
           </p>
         </form>
 
         <!-- Social auth divider -->
         <div class="flex items-center my-6">
-          <div class="flex-1 h-px bg-gray-200" />
-          <span class="px-3 text-gray-400 text-sm">or</span>
-          <div class="flex-1 h-px bg-gray-200" />
+          <div class="flex-1 h-px bg-gray-200 dark:bg-slate-700" />
+          <span class="px-3 text-gray-400 text-sm dark:text-slate-500">or</span>
+          <div class="flex-1 h-px bg-gray-200 dark:bg-slate-700" />
         </div>
 
-        <!-- Google Sign-In button mounts here -->
         <div class="flex justify-center">
           <div ref="googleButtonEl"></div>
         </div>
-
-        
       </div>
     </main>
 
-    <!-- Footer -->
     <Footer />
   </div>
 </template>

@@ -1,35 +1,20 @@
-🚀 Job Tracker App
+# WorkCompass
 
-A full-stack job tracking platform built with Vue 3, Tailwind CSS, Node.js, and MongoDB.
-Users can register, log in, and manage their job applications with ease — whether they’re candidates applying for jobs or recruiters tracking applicants.
+**Your job search, organized.**
 
-🌐 Tech Stack
-Frontend
+WorkCompass helps you stay on top of applications, interviews, and next steps — without losing track of what matters.
 
-⚡️ Vue 3
+## Features
 
-🎨 Tailwind CSS
+- Track all your applications in one place  
+- Plan interviews and follow-ups with a calendar  
+- See how your search is going with simple insights  
+- Compare job offers with Career Compass  
+- Browse wellbeing resources freely (no account needed)  
+- Save personal wellbeing check-ins when you’re signed in  
 
-🧭 Vue Router
+## Get started
 
-📦 Vite
- for fast builds and hot reloading
+Visit **[www.workcompass.net](https://www.workcompass.net)**
 
-Backend
-
-🟢 Node.js
-
-⚙️ Express.js
-
-🗄️ MongoDB
-
-🔐 JWT Authentication
-
-🧂 bcryptjs
- for password hashing
-
-🌿 dotenv
- for environment variables
-
- Website: https://www.workcompass.net
-
+Create an account to start tracking, or explore wellbeing resources right away.

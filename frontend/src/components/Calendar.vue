@@ -192,15 +192,15 @@ const getStatusColor = (status) => {
 </script>
 
 <template>
-  <div class="bg-white rounded-xl shadow-lg p-6">
+  <div class="rounded-xl p-2 text-slate-900 dark:text-slate-100">
     <!-- Calendar Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-      <div class="flex items-center gap-4 mb-4 sm:mb-0">
-        <h2 class="text-2xl font-bold text-gray-900">Interview Calendar</h2>
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3">
+      <div class="flex items-center gap-3 mb-2 sm:mb-0">
+        <h2 class="text-lg font-bold text-slate-900 dark:text-slate-100">Interview Calendar</h2>
         <div class="flex gap-2">
           <button
             @click="goToToday"
-            class="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+            class="px-3 py-1 text-sm bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:hover:bg-indigo-900/50 transition-colors"
           >
             Today
           </button>
@@ -208,12 +208,12 @@ const getStatusColor = (status) => {
       </div>
       
       <!-- View Mode Toggle -->
-      <div class="flex bg-gray-100 rounded-lg p-1">
+      <div class="flex bg-slate-100 dark:bg-slate-700 rounded-lg p-1">
         <button
           @click="viewMode = 'month'"
           :class="[
             'px-3 py-1 text-sm font-medium rounded-md transition-colors',
-            viewMode === 'month' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+            viewMode === 'month' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-sm' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100'
           ]"
         >
           Month
@@ -222,7 +222,7 @@ const getStatusColor = (status) => {
           @click="viewMode = 'week'"
           :class="[
             'px-3 py-1 text-sm font-medium rounded-md transition-colors',
-            viewMode === 'week' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+            viewMode === 'week' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-sm' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100'
           ]"
         >
           Week
@@ -231,7 +231,7 @@ const getStatusColor = (status) => {
           @click="viewMode = 'day'"
           :class="[
             'px-3 py-1 text-sm font-medium rounded-md transition-colors',
-            viewMode === 'day' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+            viewMode === 'day' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-sm' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100'
           ]"
         >
           Day
@@ -240,17 +240,17 @@ const getStatusColor = (status) => {
     </div>
 
     <!-- Navigation -->
-    <div class="flex items-center justify-between mb-4">
+    <div class="flex items-center justify-between mb-2">
       <div class="flex items-center gap-2">
         <button
           @click="viewMode === 'month' ? navigateMonth(-1) : viewMode === 'week' ? navigateWeek(-1) : navigateDay(-1)"
-          class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+          class="p-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
           </svg>
         </button>
-        <h3 class="text-lg font-semibold text-gray-900 min-w-0">
+        <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 min-w-0">
           {{ currentDate.toLocaleDateString('en-US', { 
             month: 'long', 
             year: 'numeric',
@@ -260,7 +260,7 @@ const getStatusColor = (status) => {
         </h3>
         <button
           @click="viewMode === 'month' ? navigateMonth(1) : viewMode === 'week' ? navigateWeek(1) : navigateDay(1)"
-          class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+          class="p-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
@@ -268,7 +268,7 @@ const getStatusColor = (status) => {
         </button>
       </div>
       
-      <div class="text-sm text-gray-600">
+      <div class="text-sm text-slate-600 dark:text-slate-300">
         {{ interviewApplications.length }} interview{{ interviewApplications.length !== 1 ? 's' : '' }} scheduled
       </div>
     </div>
@@ -278,7 +278,7 @@ const getStatusColor = (status) => {
       <!-- Day headers -->
       <div v-for="day in ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']" 
            :key="day" 
-           class="p-2 text-center text-sm font-medium text-gray-500 bg-gray-50 rounded-t-lg">
+           class="p-2 text-center text-sm font-medium text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-700 rounded-t-lg">
         {{ day }}
       </div>
       
@@ -288,17 +288,17 @@ const getStatusColor = (status) => {
         :key="day.date.toISOString()"
         @click="selectDate(day.date)"
         :class="[
-          'min-h-[100px] p-2 border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors',
-          day.isCurrentMonth ? 'bg-white' : 'bg-gray-50',
+          'min-h-[60px] p-1.5 border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-xs',
+          day.isCurrentMonth ? 'bg-white dark:bg-slate-800' : 'bg-slate-50 dark:bg-slate-900/50',
           day.isToday ? 'ring-2 ring-blue-500' : '',
-          selectedDate?.toDateString() === day.date.toDateString() ? 'bg-blue-50' : ''
+          selectedDate?.toDateString() === day.date.toDateString() ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''
         ]"
       >
         <div class="flex items-center justify-between mb-1">
           <span :class="[
             'text-sm font-medium',
-            day.isCurrentMonth ? 'text-gray-900' : 'text-gray-400',
-            day.isToday ? 'text-blue-600' : ''
+            day.isCurrentMonth ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 dark:text-slate-500',
+            day.isToday ? 'text-indigo-600 dark:text-indigo-300' : ''
           ]">
             {{ day.date.getDate() }}
           </span>
@@ -312,12 +312,12 @@ const getStatusColor = (status) => {
             v-for="app in day.applications.slice(0, 2)"
             :key="app._id"
             @click.stop="openInterviewModal(app)"
-            class="text-xs p-1 bg-yellow-100 text-yellow-800 rounded truncate cursor-pointer hover:bg-yellow-200 transition-colors"
+            class="text-xs p-1 bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 rounded truncate cursor-pointer hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors"
           >
             {{ app.company }} - {{ app.role }}
           </div>
           <div v-if="day.applications.length > 2" 
-               class="text-xs text-gray-500 text-center">
+               class="text-xs text-slate-500 dark:text-slate-400 text-center">
             +{{ day.applications.length - 2 }} more
           </div>
         </div>
@@ -327,12 +327,12 @@ const getStatusColor = (status) => {
     <!-- Week View -->
     <div v-if="viewMode === 'week'" class="grid grid-cols-7 gap-1">
       <div v-for="day in weekDays" :key="day.date.toISOString()" 
-           class="min-h-[200px] border border-gray-200 rounded-lg">
-        <div class="p-2 bg-gray-50 border-b border-gray-200">
-          <div class="text-sm font-medium text-gray-900">
+           class="min-h-[80px] border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800">
+        <div class="p-2 bg-slate-50 dark:bg-slate-700 border-b border-slate-200 dark:border-slate-700">
+          <div class="text-sm font-medium text-slate-900 dark:text-slate-100">
             {{ day.date.toLocaleDateString('en-US', { weekday: 'short' }) }}
           </div>
-          <div class="text-lg font-bold text-gray-900">
+          <div class="text-lg font-bold text-slate-900 dark:text-slate-100">
             {{ day.date.getDate() }}
           </div>
         </div>
@@ -341,11 +341,11 @@ const getStatusColor = (status) => {
             v-for="app in day.applications"
             :key="app._id"
             @click="openInterviewModal(app)"
-            class="text-xs p-2 bg-yellow-100 text-yellow-800 rounded cursor-pointer hover:bg-yellow-200 transition-colors"
+            class="text-xs p-2 bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 rounded cursor-pointer hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors"
           >
             <div class="font-medium">{{ app.company }}</div>
-            <div class="text-yellow-600">{{ app.role }}</div>
-            <div v-if="app.interviewTime" class="text-yellow-600">
+            <div class="text-amber-700 dark:text-amber-200">{{ app.role }}</div>
+            <div v-if="app.interviewTime" class="text-amber-700 dark:text-amber-200">
               {{ formatTime(app.interviewTime) }}
             </div>
           </div>
@@ -360,29 +360,29 @@ const getStatusColor = (status) => {
           v-for="app in dayApplications"
           :key="app._id"
           @click="openInterviewModal(app)"
-          class="p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+          class="p-4 border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors bg-white dark:bg-slate-800"
         >
           <div class="flex items-center justify-between">
             <div>
-              <h4 class="font-semibold text-gray-900">{{ app.company }}</h4>
-              <p class="text-sm text-gray-600">{{ app.role }}</p>
+              <h4 class="font-semibold text-slate-900 dark:text-slate-100">{{ app.company }}</h4>
+              <p class="text-sm text-slate-600 dark:text-slate-300">{{ app.role }}</p>
             </div>
             <div class="text-right">
-              <div v-if="app.interviewTime" class="text-sm font-medium text-gray-900">
+              <div v-if="app.interviewTime" class="text-sm font-medium text-slate-900 dark:text-slate-100">
                 {{ formatTime(app.interviewTime) }}
               </div>
-              <div v-if="app.interviewType" class="text-xs text-gray-500 capitalize">
+              <div v-if="app.interviewType" class="text-xs text-slate-500 dark:text-slate-400 capitalize">
                 {{ app.interviewType }}
               </div>
             </div>
           </div>
-          <div v-if="app.interviewLocation" class="mt-2 text-sm text-gray-600">
+          <div v-if="app.interviewLocation" class="mt-2 text-sm text-slate-600 dark:text-slate-300">
             📍 {{ app.interviewLocation }}
           </div>
         </div>
         
-        <div v-if="dayApplications.length === 0" class="text-center py-8 text-gray-500">
-          <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div v-if="dayApplications.length === 0" class="text-center py-8 text-slate-500 dark:text-slate-400">
+          <svg class="w-12 h-12 mx-auto mb-4 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
           </svg>
           <p class="text-lg font-medium mb-2">No interviews scheduled</p>
@@ -392,50 +392,50 @@ const getStatusColor = (status) => {
     </div>
 
     <!-- Interview Details Modal -->
-    <div v-if="showInterviewModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+    <div v-if="showInterviewModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+      <div class="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700">
         <div class="p-6">
           <div class="flex justify-between items-center mb-4">
-            <h3 class="text-xl font-semibold">Schedule Interview</h3>
-            <button @click="closeInterviewModal" class="text-gray-400 hover:text-gray-600">
+            <h3 class="text-xl font-semibold text-slate-900 dark:text-slate-100">Schedule Interview</h3>
+            <button @click="closeInterviewModal" class="text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
               </svg>
             </button>
           </div>
           
-          <div v-if="selectedApplication" class="mb-4 p-3 bg-gray-50 rounded-lg">
-            <h4 class="font-semibold text-gray-900">{{ selectedApplication.company }}</h4>
-            <p class="text-sm text-gray-600">{{ selectedApplication.role }}</p>
+          <div v-if="selectedApplication" class="mb-4 p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+            <h4 class="font-semibold text-slate-900 dark:text-slate-100">{{ selectedApplication.company }}</h4>
+            <p class="text-sm text-slate-600 dark:text-slate-300">{{ selectedApplication.role }}</p>
           </div>
           
           <div class="space-y-4">
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Date</label>
                 <input
                   v-model="interviewDate"
                   type="date"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-slate-700 dark:text-slate-100"
                   required
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Time</label>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Time</label>
                 <input
                   v-model="interviewTime"
                   type="time"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-slate-700 dark:text-slate-100"
                   required
                 />
               </div>
             </div>
             
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Type</label>
               <select
                 v-model="interviewType"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-slate-700 dark:text-slate-100"
               >
                 <option value="video">Video Call</option>
                 <option value="phone">Phone Call</option>
@@ -444,35 +444,35 @@ const getStatusColor = (status) => {
             </div>
             
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Location/Link</label>
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Location/Link</label>
               <input
                 v-model="interviewLocation"
                 type="text"
                 placeholder="Meeting link or address"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-slate-700 dark:text-slate-100"
               />
             </div>
             
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Notes</label>
               <textarea
                 v-model="interviewNotes"
                 rows="3"
                 placeholder="Interview notes, questions, etc."
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-slate-700 dark:text-slate-100"
               ></textarea>
             </div>
             
             <div class="flex justify-end gap-2 pt-4">
               <button
                 @click="closeInterviewModal"
-                class="px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+                class="px-4 py-2 text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
               >
                 Cancel
               </button>
               <button
                 @click="saveInterview"
-                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
               >
                 Save Interview
               </button>

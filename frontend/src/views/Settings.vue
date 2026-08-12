@@ -2,12 +2,23 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useUserStore } from "../store/userStore.js";
-import Header from "../components/Header.vue";
-import Footer from "../components/Footer.vue";
+import SidebarShell from "../components/SidebarShell.vue";
+import SectionHeader from "../components/SectionHeader.vue";
 import { getProfile, updateProfile, changePassword, deleteAccount } from "../../services/api.js";
 
 const router = useRouter();
 const userStore = useUserStore();
+
+const navItems = [
+  { label: "Dashboard", to: "/dashboard" },
+  { label: "Applications", to: "/applications" },
+  { label: "Calendar", to: "/calendar" },
+  { label: "Analytics", to: "/analytics" },
+  { label: "Career Compass", to: "/career-compass" },
+  { label: "Wellbeing", to: "/wellness/monitoring" },
+  { label: "Settings", to: "/settings" },
+];
+const secondaryItems = [{ label: "Community", to: "/community/forum" }];
 
 const isEditing = ref(false);
 const isDeleting = ref(false);
@@ -15,14 +26,12 @@ const isSubmitting = ref(false);
 const errorMessage = ref("");
 const successMessage = ref("");
 
-// Profile data
 const name = ref("");
 const email = ref("");
 const recruiterCompany = ref("");
 const location = ref("");
 const strivingFor = ref("");
 
-// Password change
 const currentPassword = ref("");
 const newPassword = ref("");
 const confirmPassword = ref("");
@@ -55,7 +64,7 @@ const startEdit = () => {
 
 const cancelEdit = () => {
   isEditing.value = false;
-  fetchUserData(); // Reset to original values
+  fetchUserData();
   errorMessage.value = "";
   successMessage.value = "";
 };
@@ -75,14 +84,12 @@ const saveProfile = async () => {
       strivingFor: strivingFor.value
     };
 
-    // Add recruiter company if user is a recruiter
     if (userStore.user?.role === "recruiter") {
       updateData.recruiterCompany = recruiterCompany.value;
     }
 
     await updateProfile(updateData, token);
 
-    // Update user store with new data
     userStore.setUser({
       ...userStore.user,
       name: name.value,
@@ -149,7 +156,6 @@ const deleteAccountHandler = async () => {
     
     await deleteAccount(token);
 
-    // Logout and redirect
     userStore.logout();
     router.push("/");
   } catch (error) {
@@ -162,63 +168,71 @@ onMounted(fetchUserData);
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-gradient-to-br from-gray-100 to-blue-100 text-gray-800 font-sans">
-    <Header />
-
-    <!-- Main content -->
-    <main class="flex-1 px-6 py-8 max-w-4xl w-full mx-auto">
-      <div class="flex items-center justify-between mb-8">
-        <h2 class="text-3xl font-extrabold">Account Settings</h2>
-        <div v-if="!isEditing" class="flex gap-3">
-          <button @click="startEdit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
-            <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-            </svg>
-            Edit Profile
-          </button>
-        </div>
-        <div v-else class="flex gap-3">
-          <button @click="cancelEdit" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition">
-            Cancel
-          </button>
-          <button @click="saveProfile" :disabled="isSubmitting" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition disabled:opacity-60">
-            {{ isSubmitting ? 'Saving...' : 'Save Changes' }}
-          </button>
-        </div>
-      </div>
+  <SidebarShell :nav-items="navItems" :secondary-items="secondaryItems">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <SectionHeader title="Settings" subtitle="Manage your account, profile, and preferences">
+        <template #actions>
+          <div v-if="!isEditing">
+            <button
+              @click="startEdit"
+              class="inline-flex h-10 items-center justify-center gap-2 bg-indigo-600 text-white px-4 py-0 rounded-lg hover:bg-indigo-700 transition text-sm font-medium"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+              </svg>
+              Edit Profile
+            </button>
+          </div>
+          <div v-else class="flex gap-3">
+            <button
+              @click="cancelEdit"
+              class="inline-flex h-10 items-center justify-center px-4 py-0 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition text-sm font-medium dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+            >
+              Cancel
+            </button>
+            <button
+              @click="saveProfile"
+              :disabled="isSubmitting"
+              class="inline-flex h-10 items-center justify-center bg-indigo-600 text-white px-4 py-0 rounded-lg hover:bg-indigo-700 transition text-sm font-medium disabled:opacity-60"
+            >
+              {{ isSubmitting ? 'Saving...' : 'Save Changes' }}
+            </button>
+          </div>
+        </template>
+      </SectionHeader>
 
       <!-- Messages -->
-      <div v-if="errorMessage" class="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+      <div v-if="errorMessage" class="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg dark:bg-red-900/20 dark:border-red-700 dark:text-red-400">
         {{ errorMessage }}
       </div>
-      <div v-if="successMessage" class="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
+      <div v-if="successMessage" class="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg dark:bg-emerald-900/20 dark:border-emerald-700 dark:text-emerald-400">
         {{ successMessage }}
       </div>
 
       <!-- Profile Information -->
-      <section class="bg-white rounded-xl shadow p-6 mb-8">
-        <h3 class="text-xl font-semibold mb-6">Profile Information</h3>
+      <section class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-6 dark:bg-slate-800 dark:border-slate-700 dark:shadow-slate-900/30">
+        <h3 class="text-lg font-semibold text-slate-900 mb-6 dark:text-slate-100">Profile Information</h3>
         
         <div v-if="!isEditing" class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
-            <p class="text-gray-900">{{ name || 'Not set' }}</p>
+            <label class="block text-sm font-medium text-slate-500 mb-1 dark:text-slate-400">Name</label>
+            <p class="text-slate-900 font-medium dark:text-slate-100">{{ name || 'Not set' }}</p>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <p class="text-gray-900">{{ email || 'Not set' }}</p>
+            <label class="block text-sm font-medium text-slate-500 mb-1 dark:text-slate-400">Email</label>
+            <p class="text-slate-900 font-medium dark:text-slate-100">{{ email || 'Not set' }}</p>
           </div>
           <div v-if="userStore.user?.role === 'recruiter'">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Company</label>
-            <p class="text-gray-900">{{ recruiterCompany || 'Not set' }}</p>
+            <label class="block text-sm font-medium text-slate-500 mb-1 dark:text-slate-400">Company</label>
+            <p class="text-slate-900 font-medium dark:text-slate-100">{{ recruiterCompany || 'Not set' }}</p>
           </div>
           <div v-if="userStore.user?.role === 'candidate'">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Location</label>
-            <p class="text-gray-900">{{ location || 'Not set' }}</p>
+            <label class="block text-sm font-medium text-slate-500 mb-1 dark:text-slate-400">Location</label>
+            <p class="text-slate-900 font-medium dark:text-slate-100">{{ location || 'Not set' }}</p>
           </div>
           <div v-if="userStore.user?.role === 'candidate'" class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Striving For</label>
-            <p class="text-gray-900">{{ strivingFor || 'Not set' }}</p>
+            <label class="block text-sm font-medium text-slate-500 mb-1 dark:text-slate-400">Striving For</label>
+            <p class="text-slate-900 font-medium dark:text-slate-100">{{ strivingFor || 'Not set' }}</p>
           </div>
         </div>
 
@@ -226,39 +240,39 @@ onMounted(fetchUserData);
           <div v-if="userStore.user?.role === 'recruiter'" class="space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                <input v-model="name" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required />
+                <label class="block text-sm font-medium text-slate-700 mb-1 dark:text-slate-300">Name</label>
+                <input v-model="name" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100" required />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input v-model="email" type="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required />
+                <label class="block text-sm font-medium text-slate-700 mb-1 dark:text-slate-300">Email</label>
+                <input v-model="email" type="email" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100" required />
               </div>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Company</label>
-              <input v-model="recruiterCompany" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required />
+              <label class="block text-sm font-medium text-slate-700 mb-1 dark:text-slate-300">Company</label>
+              <input v-model="recruiterCompany" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100" required />
             </div>
           </div>
 
           <div v-if="userStore.user?.role === 'candidate'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="space-y-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                <input v-model="name" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required />
+                <label class="block text-sm font-medium text-slate-700 mb-1 dark:text-slate-300">Name</label>
+                <input v-model="name" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100" required />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                <input v-model="location" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+                <label class="block text-sm font-medium text-slate-700 mb-1 dark:text-slate-300">Location</label>
+                <input v-model="location" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100" />
               </div>
             </div>
             <div class="space-y-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input v-model="email" type="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required />
+                <label class="block text-sm font-medium text-slate-700 mb-1 dark:text-slate-300">Email</label>
+                <input v-model="email" type="email" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100" required />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Striving For</label>
-                <input v-model="strivingFor" placeholder="e.g., Senior Developer role, Remote work, Startup environment..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+                <label class="block text-sm font-medium text-slate-700 mb-1 dark:text-slate-300">Striving For</label>
+                <input v-model="strivingFor" placeholder="e.g., Senior Developer role, Remote work, Startup environment..." class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-400" />
               </div>
             </div>
           </div>
@@ -266,37 +280,43 @@ onMounted(fetchUserData);
       </section>
 
       <!-- Password Change -->
-      <section class="bg-white rounded-xl shadow p-6 mb-8">
-        <h3 class="text-xl font-semibold mb-6">Change Password</h3>
-        <form @submit.prevent="changePasswordHandler" class="space-y-4">
+      <section class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-6 dark:bg-slate-800 dark:border-slate-700 dark:shadow-slate-900/30">
+        <h3 class="text-lg font-semibold text-slate-900 mb-6 dark:text-slate-100">Change Password</h3>
+        <form @submit.prevent="changePasswordHandler" class="space-y-4 max-w-md">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
-            <input v-model="currentPassword" type="password" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required />
+            <label class="block text-sm font-medium text-slate-700 mb-1 dark:text-slate-300">Current Password</label>
+            <input v-model="currentPassword" type="password" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100" required />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
-            <input v-model="newPassword" type="password" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required />
+            <label class="block text-sm font-medium text-slate-700 mb-1 dark:text-slate-300">New Password</label>
+            <input v-model="newPassword" type="password" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100" required />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
-            <input v-model="confirmPassword" type="password" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required />
+            <label class="block text-sm font-medium text-slate-700 mb-1 dark:text-slate-300">Confirm New Password</label>
+            <input v-model="confirmPassword" type="password" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100" required />
           </div>
-          <button type="submit" :disabled="isSubmitting" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-60">
+          <button
+            type="submit"
+            :disabled="isSubmitting"
+            class="inline-flex h-10 items-center justify-center bg-indigo-600 text-white px-4 py-0 rounded-lg hover:bg-indigo-700 transition text-sm font-medium disabled:opacity-60"
+          >
             {{ isSubmitting ? 'Changing...' : 'Change Password' }}
           </button>
         </form>
       </section>
 
       <!-- Danger Zone -->
-      <section class="bg-red-50 border border-red-200 rounded-xl p-6">
-        <h3 class="text-xl font-semibold text-red-800 mb-4">Danger Zone</h3>
-        <p class="text-red-700 mb-4">Once you delete your account, there is no going back. Please be certain.</p>
-        <button @click="deleteAccountHandler" :disabled="isDeleting" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition disabled:opacity-60">
+      <section class="bg-red-50 border border-red-200 rounded-xl p-6 dark:bg-red-900/20 dark:border-red-700">
+        <h3 class="text-lg font-semibold text-red-800 mb-3 dark:text-red-300">Danger Zone</h3>
+        <p class="text-red-600 text-sm mb-4 dark:text-red-400">Once you delete your account, there is no going back. Please be certain.</p>
+        <button
+          @click="deleteAccountHandler"
+          :disabled="isDeleting"
+          class="inline-flex h-10 items-center justify-center bg-red-600 text-white px-4 py-0 rounded-lg hover:bg-red-700 transition text-sm font-medium disabled:opacity-60"
+        >
           {{ isDeleting ? 'Deleting...' : 'Delete Account' }}
         </button>
       </section>
-    </main>
-
-    <Footer />
-  </div>
+    </div>
+  </SidebarShell>
 </template>

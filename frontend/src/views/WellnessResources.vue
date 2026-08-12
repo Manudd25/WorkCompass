@@ -2,6 +2,11 @@
 import { ref } from "vue";
 import { RouterLink } from "vue-router";
 import Footer from "../components/Footer.vue";
+import { useUserStore } from "../store/userStore.js";
+import { useTheme } from "../composables/useTheme.js";
+
+const userStore = useUserStore();
+const { isDark, toggleTheme } = useTheme();
 
 const selectedCategory = ref("all");
 const resources = ref([
@@ -117,13 +122,13 @@ const getTypeIcon = (type) => {
 
 const getTypeColor = (type) => {
   const colors = {
-    "Video": "bg-purple-100 text-purple-800",
-    "Audio": "bg-blue-100 text-blue-800",
-    "Article": "bg-green-100 text-green-800",
-    "Guide": "bg-orange-100 text-orange-800",
-    "Course": "bg-indigo-100 text-indigo-800"
+    "Video": "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
+    "Audio": "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+    "Article": "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300",
+    "Guide": "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300",
+    "Course": "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300"
   };
-  return colors[type] || "bg-gray-100 text-gray-800";
+  return colors[type] || "bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200";
 };
 
 const filteredResources = ref(resources.value);
@@ -137,70 +142,82 @@ const filterResources = () => {
 };
 
 const handleImageError = (event) => {
-  // Simple fallback to a generic placeholder
   event.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzZjNzI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIFByZXZpZXcgQXZhaWxhYmxlPC90ZXh0Pjwvc3ZnPg==';
 };
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50">
-    <!-- Header -->
-    <header class="bg-white shadow-sm border-b border-gray-200">
+  <div class="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 text-slate-900 dark:from-slate-900 dark:to-slate-900 dark:text-slate-100">
+    <!-- Public header (same structure as before) -->
+    <header class="bg-white shadow-sm border-b border-gray-200 dark:bg-slate-800 dark:border-slate-700">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <RouterLink to="/" class="text-2xl font-bold text-slate-800 hover:text-blue-600 transition-colors">
-              WorkCompass
-            </RouterLink>
-          </div>
-          <nav class="space-x-4">
-            <RouterLink to="/dashboard" class="text-slate-600 hover:text-slate-800 font-medium">
-              Dashboard
-            </RouterLink>
-            <RouterLink to="/settings" class="text-slate-600 hover:text-slate-800 font-medium">
-              Settings
-            </RouterLink>
+        <div class="flex items-center justify-between gap-4">
+          <RouterLink to="/" class="text-2xl font-bold text-slate-800 hover:text-indigo-600 transition-colors dark:text-slate-100 dark:hover:text-indigo-300">
+            WorkCompass
+          </RouterLink>
+          <nav class="flex items-center gap-3 sm:gap-4">
+            <button
+              type="button"
+              @click="toggleTheme"
+              :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+              class="h-10 w-10 inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
+            >
+              <span v-if="isDark" aria-hidden="true">☀️</span>
+              <span v-else aria-hidden="true">🌙</span>
+            </button>
+            <template v-if="userStore.user">
+              <RouterLink to="/dashboard" class="text-slate-600 hover:text-slate-800 font-medium dark:text-slate-300 dark:hover:text-slate-100">
+                Dashboard
+              </RouterLink>
+              <RouterLink to="/settings" class="text-slate-600 hover:text-slate-800 font-medium dark:text-slate-300 dark:hover:text-slate-100">
+                Settings
+              </RouterLink>
+            </template>
+            <template v-else>
+              <RouterLink to="/login" class="text-slate-600 hover:text-slate-800 font-medium dark:text-slate-300 dark:hover:text-slate-100">
+                Login
+              </RouterLink>
+              <RouterLink to="/signup" class="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
+                Get Started
+              </RouterLink>
+            </template>
           </nav>
         </div>
       </div>
     </header>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <!-- Page Header -->
       <div class="mb-12 text-center">
-        <h1 class="text-4xl font-bold text-slate-900 mb-4">Wellness Resources</h1>
-        <p class="text-lg text-slate-600 max-w-3xl mx-auto">
+        <h1 class="text-4xl font-bold text-slate-900 mb-4 dark:text-slate-100">Wellness Resources</h1>
+        <p class="text-lg text-slate-600 max-w-3xl mx-auto dark:text-slate-300">
           Access a comprehensive library of mental health resources, guided meditations, stress management techniques, and educational content.
         </p>
       </div>
 
-      <!-- Category Filters -->
       <div class="mb-8 flex flex-wrap justify-center gap-3">
-        <button 
-          v-for="cat in categories" 
+        <button
+          v-for="cat in categories"
           :key="cat.value"
+          type="button"
           @click="selectedCategory = cat.value; filterResources()"
           class="px-6 py-2 rounded-lg font-medium transition-all duration-200"
-          :class="selectedCategory === cat.value 
-            ? 'bg-slate-800 text-white shadow-lg' 
-            : 'bg-white text-slate-700 hover:bg-slate-100 border border-gray-200'"
+          :class="selectedCategory === cat.value
+            ? 'bg-indigo-600 text-white shadow-lg'
+            : 'bg-white text-slate-700 hover:bg-slate-100 border border-gray-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-700'"
         >
           {{ cat.label }}
         </button>
       </div>
 
-      <!-- Resources Grid -->
       <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div 
-          v-for="resource in filteredResources" 
+        <div
+          v-for="resource in filteredResources"
           :key="resource.id"
-          class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col resource-card"
-          :data-type="resource.type"
+          class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col dark:bg-slate-800 dark:border-slate-700"
         >
-          <!-- Preview Image -->
           <div class="mb-4">
-            <img 
-              :src="resource.preview" 
+            <img
+              :src="resource.preview"
               :alt="resource.title"
               class="w-full h-48 object-cover rounded-lg"
               @error="handleImageError"
@@ -211,25 +228,25 @@ const handleImageError = (event) => {
             <div>
               <div class="flex items-center mb-2">
                 <span class="text-2xl mr-2">{{ getTypeIcon(resource.type) }}</span>
-                <h3 class="text-xl font-semibold text-slate-900">{{ resource.title }}</h3>
+                <h3 class="text-xl font-semibold text-slate-900 dark:text-slate-100">{{ resource.title }}</h3>
               </div>
               <span :class="getTypeColor(resource.type)" class="px-3 py-1 rounded-full text-xs font-semibold">
                 {{ resource.type }}
               </span>
             </div>
           </div>
-          
-          <p class="text-slate-600 mb-4 text-sm flex-grow">
+
+          <p class="text-slate-600 mb-4 text-sm flex-grow dark:text-slate-300">
             {{ resource.description }}
           </p>
-          
+
           <div class="flex items-center justify-between mt-auto">
-            <span class="text-sm text-slate-500">{{ resource.duration }}</span>
-            <a 
-              :href="resource.url" 
-              target="_blank" 
+            <span class="text-sm text-slate-500 dark:text-slate-400">{{ resource.duration }}</span>
+            <a
+              :href="resource.url"
+              target="_blank"
               rel="noopener noreferrer"
-              class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-colors duration-200 text-sm inline-block"
+              class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2 rounded-lg transition-colors duration-200 text-sm inline-block"
             >
               Open Resource
             </a>
@@ -237,34 +254,31 @@ const handleImageError = (event) => {
         </div>
       </div>
 
-      <!-- Quick Tips Section -->
-      <div class="mt-16 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-8 border border-gray-200">
-        <h2 class="text-2xl font-semibold text-slate-900 mb-6 text-center">Quick Wellness Tips</h2>
-        
+      <div class="mt-16 rounded-xl p-8 border border-gray-200 bg-gradient-to-r from-indigo-50 to-slate-50 dark:border-slate-700 dark:from-slate-800 dark:to-slate-800">
+        <h2 class="text-2xl font-semibold text-slate-900 mb-6 text-center dark:text-slate-100">Quick Wellness Tips</h2>
+
         <div class="grid md:grid-cols-3 gap-6">
-          <div class="bg-white rounded-lg p-6 shadow-sm">
+          <div class="bg-white rounded-lg p-6 shadow-sm border border-slate-100 dark:bg-slate-800 dark:border-slate-700">
             <div class="text-3xl mb-3">🧘</div>
-            <h3 class="font-semibold text-slate-900 mb-2">Practice Mindfulness</h3>
-            <p class="text-sm text-slate-600">Take 5 minutes daily to practice mindfulness meditation. Focus on your breathing and be present in the moment.</p>
+            <h3 class="font-semibold text-slate-900 mb-2 dark:text-slate-100">Practice Mindfulness</h3>
+            <p class="text-sm text-slate-600 dark:text-slate-300">Take 5 minutes daily to practice mindfulness meditation. Focus on your breathing and be present in the moment.</p>
           </div>
-          
-          <div class="bg-white rounded-lg p-6 shadow-sm">
+
+          <div class="bg-white rounded-lg p-6 shadow-sm border border-slate-100 dark:bg-slate-800 dark:border-slate-700">
             <div class="text-3xl mb-3">🏃</div>
-            <h3 class="font-semibold text-slate-900 mb-2">Stay Active</h3>
-            <p class="text-sm text-slate-600">Regular exercise releases endorphins and reduces stress. Even a 10-minute walk can make a difference.</p>
+            <h3 class="font-semibold text-slate-900 mb-2 dark:text-slate-100">Stay Active</h3>
+            <p class="text-sm text-slate-600 dark:text-slate-300">Regular exercise releases endorphins and reduces stress. Even a 10-minute walk can make a difference.</p>
           </div>
-          
-          <div class="bg-white rounded-lg p-6 shadow-sm">
+
+          <div class="bg-white rounded-lg p-6 shadow-sm border border-slate-100 dark:bg-slate-800 dark:border-slate-700">
             <div class="text-3xl mb-3">💤</div>
-            <h3 class="font-semibold text-slate-900 mb-2">Prioritize Sleep</h3>
-            <p class="text-sm text-slate-600">Aim for 7-9 hours of quality sleep each night. Good sleep improves mood and cognitive function.</p>
+            <h3 class="font-semibold text-slate-900 mb-2 dark:text-slate-100">Prioritize Sleep</h3>
+            <p class="text-sm text-slate-600 dark:text-slate-300">Aim for 7-9 hours of quality sleep each night. Good sleep improves mood and cognitive function.</p>
           </div>
         </div>
       </div>
-
     </main>
-    
+
     <Footer />
   </div>
 </template>
-

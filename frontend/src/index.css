@@ -2,6 +2,49 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    /* LIGHT — pale page, white surfaces, dark text */
+    --wc-page-bg: #f8fafc;
+    --wc-surface: #ffffff;
+    --wc-surface-2: #f1f5f9;
+    --wc-text-primary: #0f172a;
+    --wc-text-secondary: #475569;
+    --wc-text-muted: #64748b;
+    --wc-border: #e2e8f0;
+    --wc-brand: #4f46e5;
+    --wc-brand-hover: #4338ca;
+    --wc-input-bg: #ffffff;
+    --wc-input-border: #cbd5e1;
+    --wc-input-text: #0f172a;
+    --wc-ring: #4f46e5;
+  }
 
+  html.dark {
+    /* DARK — navy page, elevated slate surfaces, light text */
+    --wc-page-bg: #0f172a;
+    --wc-surface: #1e293b;
+    --wc-surface-2: #111827;
+    --wc-text-primary: #f8fafc;
+    --wc-text-secondary: #cbd5e1;
+    --wc-text-muted: #94a3b8;
+    --wc-border: #334155;
+    --wc-brand: #818cf8;
+    --wc-brand-hover: #a5b4fc;
+    --wc-input-bg: #334155;
+    --wc-input-border: #475569;
+    --wc-input-text: #f8fafc;
+    --wc-ring: #818cf8;
+  }
 
-  
+  html,
+  body,
+  #app {
+    min-height: 100%;
+  }
+
+  body {
+    background-color: var(--wc-page-bg);
+    color: var(--wc-text-primary);
+  }
+}

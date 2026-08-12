@@ -52,6 +52,21 @@ export async function googleAuth(idToken) {
   return response.json();
 }
 
+// Public helper endpoint: fetches the Google OAuth client id from backend (client id is not a secret).
+export async function getGoogleClientId() {
+  const response = await fetch(`${API_BASE}/api/auth/google-client-id`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || "Failed to fetch Google client id");
+  }
+
+  return response.json();
+}
+
 // Profile endpoints
 export async function getProfile(token) {
   const response = await fetch(`${API_BASE}/api/auth/profile`, {

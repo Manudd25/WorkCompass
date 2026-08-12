@@ -172,6 +172,23 @@ export const googleAuth = async (req, res) => {
   }
 };
 
+/**
+ * Public helper for the frontend: returns the Google OAuth client id used to verify idTokens.
+ * This is safe to expose (client id is not a secret), but the client secret remains backend-only.
+ */
+export const getGoogleClientId = async (req, res) => {
+  try {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      return res.status(500).json({ message: "Google auth not configured." });
+    }
+    res.json({ clientId });
+  } catch (error) {
+    console.error("getGoogleClientId error:", error?.message || error);
+    res.status(500).json({ message: "Server error fetching Google client id." });
+  }
+};
+
 // GitHub flow removed upon request
 
 /**
