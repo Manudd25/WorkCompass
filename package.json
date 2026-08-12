@@ -1,0 +1,12 @@
+{
+  "name": "workcompass",
+  "private": true,
+  "description": "Azure App Service entrypoint. Application code lives in backend/.",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "postinstall": "npm install --omit=dev --prefix backend",
+    "start": "node backend/server.js"
+  }
+}
