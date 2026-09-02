@@ -15,17 +15,20 @@ connectDB();
 const app = express();
 
 // Middlewares
+const corsOrigins = [
+  process.env.FRONTEND_URL,
+  "https://workcompassapp.netlify.app",
+  "https://www.workcompass.net",
+  "https://workcompass.net",
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://localhost:3000",
+  "https://workcompass.netlify.app",
+  "https://workcompass-aubna8bcgub5f3bt.westeurope-01.azurewebsites.net",
+].filter(Boolean);
+
 app.use(cors({
-  origin: [
-    "https://www.workcompass.net",
-    "https://workcompass.net",
-    "http://localhost:5173", // For local development
-    "http://localhost:5174", // Alternative local port
-    "http://localhost:3000",  // Alternative local port
-    "https://workcompass.netlify.app",
-    "https://68ed3360cbf69b531b9f96a7--workcompassapp.netlify.app",
-    "https://workcompass-aubna8bcgub5f3bt.westeurope-01.azurewebsites.net"
-  ],
+  origin: corsOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
