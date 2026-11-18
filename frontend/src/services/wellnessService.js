@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE || 'https://workcompass-aubna8bcgub5f3bt.westeurope-01.azurewebsites.net';
+import { API_BASE } from "../../services/apiBase.js";
 
 // Get authorization headers
 const getAuthHeaders = () => {
