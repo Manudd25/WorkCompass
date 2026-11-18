@@ -4,7 +4,7 @@
 
 WorkCompass is a job search management platform designed to help people keep track of applications, interviews, follow-ups and opportunities — while also making the job search process easier to understand and manage.
 
-🌐 **Live:** [workcompass.net](https://workcompass.net)
+🌐 **Live:** [workcompassapp.netlify.app](https://workcompassapp.netlify.app) ( [workcompass.net](https://workcompass.net) redirects here )
 
 ---
 

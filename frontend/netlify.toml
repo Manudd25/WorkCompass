@@ -2,6 +2,14 @@
   command = "npm run build"
   publish = "dist"
 
+# Custom domain → canonical Netlify URL (DNS for workcompass.net must hit this site first)
+[[redirects]]
+  from = "/*"
+  to = "https://workcompassapp.netlify.app/:splat"
+  status = 301
+  force = true
+  conditions = { Host = ["workcompass.net", "www.workcompass.net"] }
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
